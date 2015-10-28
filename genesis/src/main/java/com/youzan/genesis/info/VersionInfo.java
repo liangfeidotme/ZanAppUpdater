@@ -1,4 +1,4 @@
-package com.youzan.genesis;
+package com.youzan.genesis.info;
 
 import android.os.Parcel;
 import android.os.Parcelable;

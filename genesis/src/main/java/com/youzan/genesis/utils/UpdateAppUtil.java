@@ -11,10 +11,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
-import com.youzan.genesis.DownloadInfo;
+import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.R;
 import com.youzan.genesis.UpdateAppService;
-import com.youzan.genesis.VersionInfo;
+import com.youzan.genesis.info.VersionInfo;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

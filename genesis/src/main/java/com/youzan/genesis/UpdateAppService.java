@@ -20,6 +20,7 @@ import android.widget.RemoteViews;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.ProgressCallback;
+import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.utils.DateUtil;
 import com.youzan.genesis.utils.DownloadUtil;
 import com.youzan.genesis.utils.FileUtil;

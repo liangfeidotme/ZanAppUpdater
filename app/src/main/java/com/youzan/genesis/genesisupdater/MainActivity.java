@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.youzan.genesis.utils.UpdateAppUtil;
-import com.youzan.genesis.VersionInfo;
+import com.youzan.genesis.info.VersionInfo;
 
 /**
  * Created by Francis on 15/10/28.
