@@ -209,7 +209,6 @@ public class UpdateAppService  extends Service {
                                     isDownloading = false;
                                     if(null == e){
                                         mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
-                                        //mNotification.defaults = Notification.DEFAULT_ALL;
                                         mNotification.contentIntent = mPendingIntent;
                                         mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
                                         mNotificationManager.notify(mNotificationId, mNotification);
