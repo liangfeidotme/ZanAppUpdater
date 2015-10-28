@@ -3,6 +3,7 @@ package com.youzan.genesis.genesisupdater;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 
 import com.youzan.genesis.utils.UpdateAppUtil;
 import com.youzan.genesis.VersionInfo;
@@ -18,6 +19,12 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        findViewById(R.id.check_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkVersion();
+            }
+        });
 
     }
 
