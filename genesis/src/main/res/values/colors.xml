@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="metarial_dialog_positive">#1A70F0</color>
+    <color name="metarial_dialog_negative">#222</color>
+    <color name="item_text_hint">#999</color>
+</resources>
