@@ -57,7 +57,7 @@ public class UpdateAppUtil {
 
         long currentTime = System.currentTimeMillis();
         if(checkTime && currentTime - lastTime < WSC_VERSION_CHECK_INTERVAL){
-            // TODO: 15/10/28 测试 每次都通过 
+            // TODO: 15/10/28 测试 每次都通过
             //return;
         }
 
@@ -71,7 +71,6 @@ public class UpdateAppUtil {
                             if (result.has(RESPONSE)) {
                                 VersionInfo versionInfo = new Gson().fromJson(result.get(RESPONSE), VersionInfo.class);
                                 if (null != versionInfo) {
-
                                     if (null != callback) {
                                         callback.onCheckVersionSuccess(versionInfo);
                                     }

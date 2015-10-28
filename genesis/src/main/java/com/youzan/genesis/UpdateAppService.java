@@ -96,7 +96,6 @@ public class UpdateAppService  extends Service {
         @Override
         public void downloaded() {
             mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
-            //mNotification.defaults = Notification.DEFAULT_ALL;
             mNotification.contentIntent = mPendingIntent;
             mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
             mNotificationManager.notify(mNotificationId, mNotification);
@@ -234,14 +233,6 @@ public class UpdateAppService  extends Service {
                                     }
                                 }
                             });
-//                    try {
-//                        DownloadUtil.download(getApplicationContext().getString(R.string.update_address), apkFile, false, downloadListener);
-//                    } catch (Exception e) {
-//                        Message msg = mHandler.obtainMessage();
-//                        msg.what = DOWNLOAD_FAIL;
-//                        mHandler.sendMessage(msg);
-//                        e.printStackTrace();
-//                    }
                 }
             }
             stopSelf();
@@ -267,9 +258,9 @@ public class UpdateAppService  extends Service {
     }
 
     private boolean checkApkFileValid(String apkPath) {
-        boolean valid = false;
+        boolean valid;
 
-        if(checkApkFileCreatedTime() || !verifyApkFileSize()){
+        if(checkApkFileCreatedTime()){
             valid = false;
         }
         else {
@@ -300,18 +291,6 @@ public class UpdateAppService  extends Service {
         long nowTime = new Date().getTime();
 
         return nowTime - lastTime > 10 * 60 * 1000;
-    }
-
-    private boolean verifyApkFileSize() {
-        //TODO:登录页直接下载，没有文件大小
-        return true;
-
-//        if (downloadInfo == null) {
-//            return false;
-//        }
-//        apkFile = new File(downloadInfo.getFilePath());
-//        long size = Math.abs(apkFile.length() - downloadInfo.getFileSize());
-//        return size <= VERIFY_FILE_ACCURACY;
     }
 
     private void install(File apkFile){

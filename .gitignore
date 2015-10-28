@@ -8,12 +8,6 @@
 # Java class files
 *.class
 
-# bin 
-*.bin
-
-# lock
-*.lock
-
 # generated files
 bin/
 gen/
@@ -40,3 +34,4 @@ workspace.xml
 .gradle
 build/
 *.iml
+**/captures
