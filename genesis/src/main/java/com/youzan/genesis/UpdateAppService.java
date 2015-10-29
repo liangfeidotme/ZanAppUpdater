@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -33,11 +34,10 @@ import java.util.Date;
 /**
  * Created by Francis on 15/10/28.
  */
-public class UpdateAppService  extends Service {
+public class UpdateAppService extends Service {
 
-    public static final String DOWNLOAD_INFO = "DOWNLOAD_INFO";
-
-    public static final int VERIFY_FILE_ACCURACY = 10;
+    public static final String ARG_DOWNLOAD_INFO = "DOWNLOAD_INFO";
+    public static final String ARG_APP_ICON = "APP_ICON";
 
     public static final int mNotificationId = R.id.app_name;
     private NotificationManager mNotificationManager = null;
@@ -46,12 +46,13 @@ public class UpdateAppService  extends Service {
     private String mDownloadProgressStr = null;
     private File apkFile = null;
     private DownloadInfo downloadInfo;
+    private int iconID;
 
     private static boolean isDownloading = false;
 
     private static final int DOWNLOAD_FAIL = -1;
     private static final int DOWNLOAD_SUCCESS = 0;
-    private Handler mHandler = new Handler(){
+    private Handler mHandler = new Handler() {
 
         @Override
         public void handleMessage(Message msg) {
@@ -69,7 +70,7 @@ public class UpdateAppService  extends Service {
                             new Intent(getApplicationContext(), UpdateAppService.class),
                             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
                     NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
-                    builder.setSmallIcon(R.drawable.app_icon)
+                    builder.setSmallIcon(iconID)
                             .setContentTitle(getApplicationContext().getString(R.string.app_name))
                             .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
                             .setContentIntent(retryIntent)
@@ -101,7 +102,7 @@ public class UpdateAppService  extends Service {
             mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
             mNotificationManager.notify(mNotificationId, mNotification);
             if (apkFile.exists() && apkFile.isFile()) {
-                if(checkApkFileValid(apkFile.getPath())) {
+                if (checkApkFileValid(apkFile.getPath())) {
                     Message msg = mHandler.obtainMessage();
                     msg.what = DOWNLOAD_SUCCESS;
                     mHandler.sendMessage(msg);
@@ -118,22 +119,22 @@ public class UpdateAppService  extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(isDownloading){
+        if (isDownloading) {
             return super.onStartCommand(intent, flags, startId);
         }
 
         initParam(intent);
 
-        if(null == downloadInfo){
+        if (null == downloadInfo) {
             return super.onStartCommand(intent, flags, startId);
         }
 
         mDownloadProgressStr = getApplicationContext().getString(R.string.download_progress);
 
         if (FileUtil.isSDCardStateOn()
-                && !FileUtil.isSDCardReadOnly()){
+                && !FileUtil.isSDCardReadOnly()) {
             if (checkApkFileExist(downloadInfo.getFilePath())) {
-                if(checkApkFileValid(apkFile.getPath())) {
+                if (checkApkFileValid(apkFile.getPath())) {
                     install(apkFile);
                     stopSelf();
                     return super.onStartCommand(intent, flags, startId);
@@ -144,6 +145,7 @@ public class UpdateAppService  extends Service {
         }
 
         mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
         mNotification = new Notification();
 
         mNotification.contentView = new RemoteViews(getApplication().getPackageName(), R.layout.update_app_notification);
@@ -154,10 +156,11 @@ public class UpdateAppService  extends Service {
 
         mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, R.string.app_name, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        mNotification.icon = R.drawable.app_icon;
+        mNotification.icon = iconID;
         mNotification.when = System.currentTimeMillis();
         mNotification.tickerText = getApplicationContext().getString(R.string.download_start);
         mNotification.contentIntent = mPendingIntent;
+        mNotification.contentView.setImageViewResource(R.id.app_icon,iconID);
         mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, 0, false);
         mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, 0) + "%");
         mNotification.contentView.setTextViewText(R.id.app_update_time, DateUtil.getCurrentTimeForNotification());
@@ -172,7 +175,13 @@ public class UpdateAppService  extends Service {
         if (intent == null) {
             return;
         }
-        Parcelable parcelable = intent.getParcelableExtra(DOWNLOAD_INFO);
+
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            iconID = bundle.getInt(ARG_APP_ICON, 0);
+        }
+
+        Parcelable parcelable = intent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
             downloadInfo = (DownloadInfo) parcelable;
             downloadInfo.setFilePath(getApkFilePath(downloadInfo.getFileName()));
@@ -181,12 +190,12 @@ public class UpdateAppService  extends Service {
         }
     }
 
-    class AppUpgradeThread extends Thread{
+    class AppUpgradeThread extends Thread {
 
         @Override
         public void run() {
             if (FileUtil.isSDCardStateOn()
-                    && !FileUtil.isSDCardReadOnly()){
+                    && !FileUtil.isSDCardReadOnly()) {
                 if (apkFile.exists() && apkFile.isFile() && checkApkFileValid(apkFile.getPath())) {
                     install(apkFile);
                 } else {
@@ -197,7 +206,7 @@ public class UpdateAppService  extends Service {
                                 @Override
                                 public void onProgress(long downloaded, long total) {
                                     mNotification.tickerText = getApplicationContext().getString(R.string.downloading);
-                                    mNotification.contentView.setProgressBar(R.id.app_update_progress, (int)total, (int)downloaded, false);
+                                    mNotification.contentView.setProgressBar(R.id.app_update_progress, (int) total, (int) downloaded, false);
                                     mNotification.contentView.setTextViewText(R.id.app_update_progress_text,
                                             String.format(mDownloadProgressStr, 100 * downloaded / total) + "%");
                                     mNotificationManager.notify(mNotificationId, mNotification);
@@ -208,7 +217,7 @@ public class UpdateAppService  extends Service {
                                 @Override
                                 public void onCompleted(Exception e, File result) {
                                     isDownloading = false;
-                                    if(null == e){
+                                    if (null == e) {
                                         mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
                                         mNotification.contentIntent = mPendingIntent;
                                         mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
@@ -218,15 +227,13 @@ public class UpdateAppService  extends Service {
                                             Message msg = mHandler.obtainMessage();
                                             msg.what = DOWNLOAD_SUCCESS;
                                             mHandler.sendMessage(msg);
-                                        }
-                                        else{
+                                        } else {
                                             Message msg = mHandler.obtainMessage();
                                             msg.what = DOWNLOAD_FAIL;
                                             mHandler.sendMessage(msg);
                                         }
                                         mNotificationManager.cancel(mNotificationId);
-                                    }
-                                    else{
+                                    } else {
                                         Message msg = mHandler.obtainMessage();
                                         msg.what = DOWNLOAD_FAIL;
                                         mHandler.sendMessage(msg);
@@ -260,10 +267,9 @@ public class UpdateAppService  extends Service {
     private boolean checkApkFileValid(String apkPath) {
         boolean valid;
 
-        if(checkApkFileCreatedTime()){
+        if (checkApkFileCreatedTime()) {
             valid = false;
-        }
-        else {
+        } else {
             try {
                 PackageManager pManager = getPackageManager();
                 PackageInfo pInfo = pManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES);
@@ -282,8 +288,8 @@ public class UpdateAppService  extends Service {
     }
 
     //文件时间差大于10分钟则删除
-    private boolean checkApkFileCreatedTime(){
-        if(downloadInfo == null){
+    private boolean checkApkFileCreatedTime() {
+        if (downloadInfo == null) {
             return true;
         }
         apkFile = new File(downloadInfo.getFilePath());
@@ -293,7 +299,7 @@ public class UpdateAppService  extends Service {
         return nowTime - lastTime > 10 * 60 * 1000;
     }
 
-    private void install(File apkFile){
+    private void install(File apkFile) {
         Uri uri = Uri.fromFile(apkFile);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

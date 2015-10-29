@@ -1,4 +1,4 @@
-package com.youzan.genesis.utils;
+package com.youzan.genesis;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,9 +12,9 @@ import com.google.gson.JsonObject;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
 import com.youzan.genesis.info.DownloadInfo;
-import com.youzan.genesis.R;
-import com.youzan.genesis.UpdateAppService;
 import com.youzan.genesis.info.VersionInfo;
+import com.youzan.genesis.utils.DialogUtil;
+import com.youzan.genesis.utils.StringUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -34,16 +34,26 @@ import java.util.TimeZone;
  */
 public class UpdateAppUtil {
 
+    public static final String WSC_VERSION_CHECK_TIME = "WSC_VERSION_CHECK_TIME";
+
     private static final long WSC_VERSION_CHECK_INTERVAL = 2 * 24 * 60 * 60 * 1000;//每2天检测一次版本
 
     private final Context context;
+    private String defaultAppName;
+    private int iconId;
 
-    private UpdateAppUtil(Context context){
+    private static UpdateAppUtil updateAppUtil;
+
+    private UpdateAppUtil(Context context, String defaultAppName,int iconId) {
         this.context = context;
+        this.defaultAppName = defaultAppName;
+        this.iconId = iconId;
     }
 
-    public static UpdateAppUtil getInstance(Context context) {
-        return new UpdateAppUtil(context);
+    public static UpdateAppUtil getInstance(Context context, String defaultAppName,int iconId) {
+        if (updateAppUtil == null)
+            updateAppUtil = new UpdateAppUtil(context, defaultAppName,iconId);
+        return updateAppUtil;
     }
 
     /**
@@ -52,11 +62,11 @@ public class UpdateAppUtil {
      * @param callback
      * @param checkTime 是否要根据时间周期判断是否检测，在设置页不需要
      */
-    public void checkVersion(String version,long lastTime,final boolean checkTime,final CheckVersionSuccessCallback callback){
+    public void checkVersion(String version, long lastTime, final boolean checkTime, final CheckVersionSuccessCallback callback) {
 
 
         long currentTime = System.currentTimeMillis();
-        if(checkTime && currentTime - lastTime < WSC_VERSION_CHECK_INTERVAL){
+        if (checkTime && currentTime - lastTime < WSC_VERSION_CHECK_INTERVAL) {
             // TODO: 15/10/28 测试 每次都通过
             //return;
         }
@@ -73,6 +83,13 @@ public class UpdateAppUtil {
                                 if (null != versionInfo) {
                                     if (null != callback) {
                                         callback.onCheckVersionSuccess(versionInfo);
+
+                                        // 有新版本，发起下载请求
+                                        if (!updateAppUtil.isVersionValid(versionInfo)) {
+                                            updateAppUtil.showUpdateVersionDialog();
+                                        } else if (updateAppUtil.haveNewVersion(versionInfo)) {
+                                            updateAppUtil.showUpdateVersionDialog(versionInfo);
+                                        }
                                     }
                                 }
                             }
@@ -86,7 +103,7 @@ public class UpdateAppUtil {
 
     private static final String RESPONSE = "response";
 
-    private  String getVersionCheckUrl(String version) {
+    private String getVersionCheckUrl(String version) {
         HashMap<String, String> params = new HashMap<String, String>();
         params.put("version", version);
         params.put("type", "android");
@@ -96,7 +113,7 @@ public class UpdateAppUtil {
 
     private static final String KDT_REGISTER_API_URL_HEAD = "http://open.koudaitong.com/api/entry?";
 
-    private String getParamStr(String method, Map<String, String> parames){
+    private String getParamStr(String method, Map<String, String> parames) {
         String str = "";
         try {
             str = URLEncoder.encode(buildParamStr(buildCompleteParams(method, parames)), "UTF-8")
@@ -112,16 +129,15 @@ public class UpdateAppUtil {
         return str;
     }
 
-    private String buildParamStr(Map<String, String> param){
+    private String buildParamStr(Map<String, String> param) {
         String paramStr = "";
         Object[] keyArray = param.keySet().toArray();
-        for(int i = 0; i < keyArray.length; i++){
-            String key = (String)keyArray[i];
+        for (int i = 0; i < keyArray.length; i++) {
+            String key = (String) keyArray[i];
 
-            if(0 == i){
+            if (0 == i) {
                 paramStr += (key + "=" + param.get(key));
-            }
-            else{
+            } else {
                 paramStr += ("&" + key + "=" + param.get(key));
             }
         }
@@ -129,10 +145,10 @@ public class UpdateAppUtil {
         return paramStr;
     }
 
-    private Map<String, String> buildCompleteParams(String method, Map<String, String> parames) throws Exception{
+    private Map<String, String> buildCompleteParams(String method, Map<String, String> parames) throws Exception {
         Map<String, String> commonParams = getCommonParams(method);
         for (String key : parames.keySet()) {
-            if(commonParams.containsKey(key)){
+            if (commonParams.containsKey(key)) {
                 throw new Exception("参数名冲突");
             }
 
@@ -158,7 +174,7 @@ public class UpdateAppUtil {
     private static final String SIGN_KEY = "sign";
     private static final String SIGN_METHOD_KEY = "sign_method";
 
-    private Map<String, String> getCommonParams(String method){
+    private Map<String, String> getCommonParams(String method) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
 
@@ -172,11 +188,11 @@ public class UpdateAppUtil {
         return parames;
     }
 
-    private String sign(Map<String, String> parames){
+    private String sign(Map<String, String> parames) {
         Object[] keyArray = parames.keySet().toArray();
         List<String> keyList = new ArrayList<String>();
-        for(int i = 0; i < keyArray.length; i++){
-            keyList.add((String)keyArray[i]);
+        for (int i = 0; i < keyArray.length; i++) {
+            keyList.add((String) keyArray[i]);
         }
         Collections.sort(keyList);
         String signContent = APP_SECRET;
@@ -188,14 +204,14 @@ public class UpdateAppUtil {
         return hash(signContent);
     }
 
-    private String hash(String signContent){
+    private String hash(String signContent) {
         String hashResult = "";
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(signContent.getBytes("UTF-8"));
             byte byteData[] = md.digest();
             StringBuffer sb = new StringBuffer();
-            for(int i = 0; i < byteData.length; i++){
+            for (int i = 0; i < byteData.length; i++) {
                 sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
             }
             hashResult = sb.toString().toLowerCase();
@@ -207,25 +223,15 @@ public class UpdateAppUtil {
     }
 
 
-
-
-
-
-
-
-
-
-
-    public void downloadAppApk(final VersionInfo versionInfo){
+    public void downloadAppApk(final VersionInfo versionInfo) {
         final String upgradeUrl;
         final String apkName;
         final long apkSize;
-        if(null == versionInfo){
+        if (null == versionInfo) {
             upgradeUrl = context.getString(R.string.update_address);
             apkName = getApkFileName(null);
             apkSize = -100;
-        }
-        else{
+        } else {
             upgradeUrl = versionInfo.getUpgradeUrl();
             apkName = getApkFileName(versionInfo.getVersionName());
             apkSize = versionInfo.getFileSize();
@@ -236,14 +242,14 @@ public class UpdateAppUtil {
         //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
         NetworkInfo mobileNetworkInfo = conMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         NetworkInfo.State mobile = null;
-        if(null != mobileNetworkInfo) {
+        if (null != mobileNetworkInfo) {
             mobile = mobileNetworkInfo.getState();//mobile 3G Data Network
         }
         NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();//wifi
 
         //只连了3G
-        if((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
-                && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi){
+        if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
+                && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi) {
             DialogUtil.showDialog(context, R.string.download_network_tip, R.string.confirm,
                     new DialogUtil.OnClickListener() {
                         @Override
@@ -251,17 +257,16 @@ public class UpdateAppUtil {
                             downloadFile(upgradeUrl, apkName, apkSize);
                         }
                     }, false);
-        }
-        else {
+        } else {
             downloadFile(upgradeUrl, apkName, apkSize);
         }
     }
 
     /**
-     * 获取应用文件名(格式如: wsc_v3.0.0.apk)
+     * 获取应用文件名(格式如: tempAPP_v3.0.0.apk)
      */
     public String getApkFileName(String versionName) {
-        String appName = context.getString(R.string.app_short_name);
+        String appName = defaultAppName;
 
         if (StringUtil.isEmpty(versionName)) {
             return appName + ".apk";
@@ -286,7 +291,8 @@ public class UpdateAppUtil {
         info.setDownloadUrl(url);
         info.setFileName(fileName);
         info.setFileSize(fileSize);
-        bundle.putParcelable(UpdateAppService.DOWNLOAD_INFO, info);
+        bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
+        bundle.putInt(UpdateAppService.ARG_APP_ICON,iconId);
         updateIntent.putExtras(bundle);
         context.startService(updateIntent);
     }
@@ -301,18 +307,19 @@ public class UpdateAppUtil {
     /**
      * 是否为可维护
      */
-    public static boolean isVersionValid(VersionInfo versionInfo){
+    public static boolean isVersionValid(VersionInfo versionInfo) {
         return null != versionInfo && versionInfo.isValid();
     }
 
     /**
      * 根据返回的 version info 弹框
      * 提示更新
+     *
      * @param versionInfo
      */
-    public void showUpdateVersionDialog(final VersionInfo versionInfo){
+    public void showUpdateVersionDialog(final VersionInfo versionInfo) {
         //只显示title
-        if("".equals(versionInfo.getContent())){
+        if ("".equals(versionInfo.getContent())) {
             DialogUtil.showDialog(context, versionInfo.getTitle(),
                     context.getString(R.string.update_app_now),
                     context.getString(R.string.update_app_next_time),
@@ -330,7 +337,7 @@ public class UpdateAppUtil {
             );
         }
         //显示title和content
-        else{
+        else {
             SpannableStringBuilder span = buildContentText(versionInfo);
             DialogUtil.showDialog(context, versionInfo.getTitle(), span,
                     context.getString(R.string.update_app_now),
@@ -354,7 +361,7 @@ public class UpdateAppUtil {
      * 默认弹框
      * 强制更新
      */
-    public void showUpdateVersionDialog(){
+    public void showUpdateVersionDialog() {
         DialogUtil.showDialogNoNegativeButton(context, R.string.please_update_to_newest_version_hard, R.string.update_app_now,
                 new DialogUtil.OnClickListener() {
                     @Override
@@ -374,7 +381,7 @@ public class UpdateAppUtil {
         return new SpannableStringBuilder(contentText);
     }
 
-    public interface CheckVersionSuccessCallback{
+    public interface CheckVersionSuccessCallback {
         void onCheckVersionSuccess(VersionInfo versionInfo);
     }
 

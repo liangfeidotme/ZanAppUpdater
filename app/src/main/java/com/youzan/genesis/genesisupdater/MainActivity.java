@@ -5,15 +5,13 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
-import com.youzan.genesis.utils.UpdateAppUtil;
+import com.youzan.genesis.UpdateAppUtil;
 import com.youzan.genesis.info.VersionInfo;
 
 /**
  * Created by Francis on 15/10/28.
  */
 public class MainActivity extends AppCompatActivity {
-
-    private static final String WSC_VERSION_CHECK_TIME = "WSC_VERSION_CHECK_TIME";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -22,39 +20,34 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.check_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkVersion();
+                checkUpdate();
             }
         });
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        checkVersion();
+        checkUpdate();
     }
 
-    private void checkVersion() {
+    private void checkUpdate() {
+
         final SharedPreferences preferences = MyApplication.getInstance().getPrefs();
+        long lastTime = preferences.getLong(UpdateAppUtil.WSC_VERSION_CHECK_TIME, 0);
 
         String version = MyApplication.getInstance().getVersionName();
+        int notificationIconId =  R.drawable.app_icon;
+        String defaultApkName = "wsc";
 
-        long lastTime = preferences.getLong(WSC_VERSION_CHECK_TIME, 0);
-
-        UpdateAppUtil.getInstance(this).checkVersion(version, lastTime, true, new UpdateAppUtil.CheckVersionSuccessCallback() {
+        UpdateAppUtil.getInstance(this,defaultApkName,notificationIconId).checkVersion(version, lastTime, true, new UpdateAppUtil.CheckVersionSuccessCallback() {
             @Override
             public void onCheckVersionSuccess(VersionInfo versionInfo) {
 
-                preferences.edit().putLong(WSC_VERSION_CHECK_TIME, System.currentTimeMillis()).apply();
+                preferences.edit().putLong(UpdateAppUtil.WSC_VERSION_CHECK_TIME, System.currentTimeMillis()).apply();
 
-                if (!UpdateAppUtil.isVersionValid(versionInfo)) {
-                    UpdateAppUtil.getInstance(MainActivity.this).showUpdateVersionDialog();
-                } else if (UpdateAppUtil.haveNewVersion(versionInfo)) {
-                    UpdateAppUtil.getInstance(MainActivity.this).showUpdateVersionDialog(versionInfo);
-                }
             }
         });
     }
-
 
 }

@@ -7,7 +7,6 @@
     <string name="update_address">"http://kdt-cloud.qiniudn.com/koudaitong.apk"</string><!-- 下载地址 -->
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
-    <string name="app_short_name">wsc</string>
     <string name="get_data_fail">获取数据失败</string>
     <string name="request_data_fail">服务器请求失败</string>
 

@@ -9,6 +9,10 @@ import java.io.File;
  */
 public class FileUtil {
 
+    /*
+     * /storage/emulated/0/koudaitong/download/wsc.apk
+     */
+
     private static String SDPATH = Environment.getExternalStorageDirectory() + File.separator;
     private static String APP_PATH = SDPATH + "koudaitong" + File.separator;
     private static String DOWNLOAD_PATH = APP_PATH + "download" + File.separator;
