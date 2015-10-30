@@ -10,6 +10,7 @@ import com.youzan.genesis.info.VersionInfo;
 
 /**
  * Created by Francis on 15/10/28.
+ * 在主界面{@link #onStart()}的时候检查更新
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -31,12 +32,20 @@ public class MainActivity extends AppCompatActivity {
         checkUpdate();
     }
 
+    /**
+     *  所需参数：
+     *  lastTime                上次检查更新的时间
+     *  version                 当前版本
+     *  notificationIconId      下载时显示的App icon
+     *  defaultApkName          默认的apk文件名（为获取到服务端）
+     */
     private void checkUpdate() {
 
         final SharedPreferences preferences = MyApplication.getInstance().getPrefs();
         long lastTime = preferences.getLong(UpdateAppUtil.WSC_VERSION_CHECK_TIME, 0);
 
         String version = MyApplication.getInstance().getVersionName();
+
         int notificationIconId =  R.drawable.app_icon;
         String defaultApkName = "wsc";
 

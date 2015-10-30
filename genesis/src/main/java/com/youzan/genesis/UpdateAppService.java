@@ -23,7 +23,6 @@ import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.ProgressCallback;
 import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.utils.DateUtil;
-import com.youzan.genesis.utils.DownloadUtil;
 import com.youzan.genesis.utils.FileUtil;
 import com.youzan.genesis.utils.StringUtil;
 import com.youzan.genesis.utils.ToastUtil;
@@ -87,31 +86,6 @@ public class UpdateAppService extends Service {
 
     };
 
-    private DownloadUtil.DownloadListener downloadListener = new DownloadUtil.DownloadListener() {
-        @Override
-        public void downloading(int progress) {
-            mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, progress, false);
-            mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, progress) + "%");
-            mNotificationManager.notify(mNotificationId, mNotification);
-        }
-
-        @Override
-        public void downloaded() {
-            mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
-            mNotification.contentIntent = mPendingIntent;
-            mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
-            mNotificationManager.notify(mNotificationId, mNotification);
-            if (apkFile.exists() && apkFile.isFile()) {
-                if (checkApkFileValid(apkFile.getPath())) {
-                    Message msg = mHandler.obtainMessage();
-                    msg.what = DOWNLOAD_SUCCESS;
-                    mHandler.sendMessage(msg);
-                }
-            }
-            mNotificationManager.cancel(mNotificationId);
-        }
-    };
-
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -134,6 +108,7 @@ public class UpdateAppService extends Service {
         if (FileUtil.isSDCardStateOn()
                 && !FileUtil.isSDCardReadOnly()) {
             if (checkApkFileExist(downloadInfo.getFilePath())) {
+                // 本地存在有效的apk，直接安装
                 if (checkApkFileValid(apkFile.getPath())) {
                     install(apkFile);
                     stopSelf();
@@ -267,6 +242,7 @@ public class UpdateAppService extends Service {
     private boolean checkApkFileValid(String apkPath) {
         boolean valid;
 
+        // 创建时间大于10min，不再有效
         if (checkApkFileCreatedTime()) {
             valid = false;
         } else {
@@ -287,7 +263,6 @@ public class UpdateAppService extends Service {
         return valid;
     }
 
-    //文件时间差大于10分钟则删除
     private boolean checkApkFileCreatedTime() {
         if (downloadInfo == null) {
             return true;

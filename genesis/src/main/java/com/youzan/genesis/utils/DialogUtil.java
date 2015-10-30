@@ -78,7 +78,6 @@ public class DialogUtil {
         alertDialog = builder.create();
         setDialogColor(context);
         alertDialog.show();
-
     }
 
     public static void showDialog(Context context, String title, CharSequence message, String positiveMessage,
@@ -112,8 +111,6 @@ public class DialogUtil {
         alertDialog = builder.create();
         setDialogColor(context);
         alertDialog.show();
-
-
     }
 
     public static void showDialogNoNegativeButton(Context context, int message, int positiveMessage, final OnClickListener positiveClickListener, boolean cancelable){
@@ -136,10 +133,7 @@ public class DialogUtil {
         alertDialog = builder.create();
         setDialogColor(context);
         alertDialog.show();
-
     }
-
-
 
     /**
      * 修改按钮颜色
