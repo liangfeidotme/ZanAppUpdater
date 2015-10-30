@@ -8,12 +8,24 @@ android {
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 1
-        versionName "1.0"
+        versionName "0.0.1"
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+apply plugin: 'maven'
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: '../../maven_local_repo/')
+            pom.version = '0.0.1-snapshot'
+            pom.groupId = 'com.youzan.genesis'
+            pom.artifactId = "genesis"
         }
     }
 }

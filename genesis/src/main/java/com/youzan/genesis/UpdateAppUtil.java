@@ -67,8 +67,7 @@ public class UpdateAppUtil {
 
         long currentTime = System.currentTimeMillis();
         if (checkTime && currentTime - lastTime < WSC_VERSION_CHECK_INTERVAL) {
-            // TODO: 15/10/28 测试 每次都通过
-            //return;
+            return;
         }
 
         Ion.with(context)

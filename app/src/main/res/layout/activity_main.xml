@@ -7,7 +7,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:background="#FFFFFFFF"
+        android:background="#00FFFFFF"
         android:text="CHECK VERSION" />
 
 </RelativeLayout>
