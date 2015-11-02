@@ -1,10 +1,8 @@
 <resources>
     <string name="app_name">genesis</string>
 
-    <string name="please_update_to_newest_version_hard">为了您更好的使用，请更新微商城到最新版本！</string>
     <string name="update_app_next_time">下次再说</string>
     <string name="update_app_now">立即更新</string>
-    <string name="update_address">"http://kdt-cloud.qiniudn.com/koudaitong.apk"</string><!-- 下载地址 -->
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
     <string name="get_data_fail">获取数据失败</string>
