@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -18,9 +19,10 @@ import android.support.v4.app.NotificationCompat;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
-import com.koushikdutta.ion.ProgressCallback;
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.utils.DateUtil;
 import com.youzan.genesis.utils.FileUtil;
@@ -28,6 +30,9 @@ import com.youzan.genesis.utils.StringUtil;
 import com.youzan.genesis.utils.ToastUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 
 /**
@@ -139,7 +144,7 @@ public class UpdateAppService extends Service {
         mNotification.contentView.setTextViewText(R.id.app_update_time, DateUtil.getCurrentTimeForNotification());
         mNotificationManager.cancel(mNotificationId);
         mNotificationManager.notify(mNotificationId, mNotification);
-        new AppUpgradeThread().start();
+        new AsyncDownloader(downloadInfo.getDownloadUrl()).execute();
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -163,51 +168,105 @@ public class UpdateAppService extends Service {
         }
     }
 
-    class AppUpgradeThread extends Thread {
+    private class AsyncDownloader extends AsyncTask<Void, Integer, Boolean> {
+
+
+        private String downLoadUrl;
+
+        public AsyncDownloader(String url) {
+            this.downLoadUrl = url;
+        }
 
         @Override
-        public void run() {
+        protected void onPreExecute() {
+            super.onPreExecute();
             isDownloading = true;
-            Ion.with(getApplicationContext())
-                    .load(downloadInfo.getDownloadUrl())
-                    .progress(new ProgressCallback() {
-                        @Override
-                        public void onProgress(long downloaded, long total) {
-                            mNotification.tickerText = getApplicationContext().getString(R.string.downloading);
-                            mNotification.contentView.setProgressBar(R.id.app_update_progress, (int) total, (int) downloaded, false);
-                            mNotification.contentView.setTextViewText(R.id.app_update_progress_text,
-                                    String.format(mDownloadProgressStr, 100 * downloaded / total) + "%");
-                            mNotificationManager.notify(mNotificationId, mNotification);
-                        }
-                    })
-                    .write(apkFile)
-                    .setCallback(new FutureCallback<File>() {
-                        @Override
-                        public void onCompleted(Exception e, File result) {
-                            isDownloading = false;
-                            if (null == e) {
-                                mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
-                                mNotification.contentIntent = mPendingIntent;
-                                mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
-                                mNotificationManager.notify(mNotificationId, mNotification);
-                                if (apkFile.exists() && apkFile.isFile()
-                                        && checkApkFileValid(apkFile.getPath())) {
-                                    Message msg = mHandler.obtainMessage();
-                                    msg.what = DOWNLOAD_SUCCESS;
-                                    mHandler.sendMessage(msg);
-                                } else {
-                                    Message msg = mHandler.obtainMessage();
-                                    msg.what = DOWNLOAD_FAIL;
-                                    mHandler.sendMessage(msg);
-                                }
-                                mNotificationManager.cancel(mNotificationId);
-                            } else {
-                                Message msg = mHandler.obtainMessage();
-                                msg.what = DOWNLOAD_FAIL;
-                                mHandler.sendMessage(msg);
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            OkHttpClient httpClient = new OkHttpClient();
+            Call call = httpClient.newCall(new Request.Builder().url(downLoadUrl).get().build());
+            try {
+                Response response = call.execute();
+                if (response.code() == 200) {
+                    InputStream inputStream = null;
+                    FileOutputStream fos = new FileOutputStream(apkFile);
+                    try {
+                        inputStream = response.body().byteStream();
+                        byte[] buff = new byte[1024 * 4];
+                        int downloaded = 0;
+                        int target = (int) response.body().contentLength();
+
+                        publishProgress(0, target);
+                        while (true) {
+                            int readed = inputStream.read(buff);
+                            if (readed == -1) {
+                                break;
+                            }
+                            //write buff
+                            fos.write(buff, 0, readed);
+
+                            downloaded += readed;
+                            // TODO: 15/11/2 防止阻塞
+                            //publishProgress(downloaded, target);
+                            if (isCancelled()) {
+                                return false;
                             }
                         }
-                    });
+                        return downloaded == target;
+                    } catch (IOException ignore) {
+                        return false;
+                    } finally {
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
+                        if (fos != null) {
+                            fos.close();
+                        }
+                    }
+                } else {
+                    return false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            mNotification.tickerText = getApplicationContext().getString(R.string.downloading);
+            mNotification.contentView.setProgressBar(R.id.app_update_progress, values[1], values[0], false);
+            mNotification.contentView.setTextViewText(R.id.app_update_progress_text,
+                    String.format(mDownloadProgressStr, 100 * values[0] / values[1]) + "%");
+            mNotificationManager.notify(mNotificationId, mNotification);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            isDownloading = false;
+            if (result) {
+                mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
+                mNotification.contentIntent = mPendingIntent;
+                mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
+                mNotificationManager.notify(mNotificationId, mNotification);
+                if (apkFile.exists() && apkFile.isFile()
+                        && checkApkFileValid(apkFile.getPath())) {
+                    Message msg = mHandler.obtainMessage();
+                    msg.what = DOWNLOAD_SUCCESS;
+                    mHandler.sendMessage(msg);
+                } else {
+                    Message msg = mHandler.obtainMessage();
+                    msg.what = DOWNLOAD_FAIL;
+                    mHandler.sendMessage(msg);
+                }
+                mNotificationManager.cancel(mNotificationId);
+            } else {
+                Message msg = mHandler.obtainMessage();
+                msg.what = DOWNLOAD_FAIL;
+                mHandler.sendMessage(msg);
+            }
             stopSelf();
         }
     }

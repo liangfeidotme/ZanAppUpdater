@@ -6,11 +6,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
+import com.google.gson.JsonParser;
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.youzan.genesis.UpdateAppUtil;
 import com.youzan.genesis.info.VersionInfo;
+
+import java.io.IOException;
 
 /**
  * Created by Francis on 15/10/28.
@@ -64,27 +71,40 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Ion.with(this)
-                .load(checkUrl)
-                .asJsonObject()
-                .setCallback(new FutureCallback<JsonObject>() {
-                    @Override
-                    public void onCompleted(Exception e, JsonObject result) {
-                        if (null == e) {
-                            if (result.has(RESPONSE)) {
-                                VersionInfo versionInfo = new Gson().fromJson(result.get(RESPONSE), VersionInfo.class);
-                                if (null != versionInfo) {
-                                    //是否为最新版本
-                                    if (UpdateAppUtil.haveNewVersion(versionInfo)) {
-                                        UpdateAppUtil.getInstance(MainActivity.this, defaultAppName, appIcon).showUpdateVersionDialog(versionInfo);
-                                    } else {
-                                        MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
-                                    }
+        OkHttpClient mOkHttpClient = new OkHttpClient();
+        final Request request = new Request.Builder()
+                .url(checkUrl)
+                .build();
+        Call call = mOkHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+            }
+
+            @Override
+            public void onResponse(final Response response) throws IOException {
+                if (response.code() == 200) {
+                    JsonParser jsonParser = new JsonParser();
+                    JsonObject jsonObject = jsonParser.parse(response.body().string()).getAsJsonObject();
+                    JsonElement jsonElement = jsonObject.get(RESPONSE);
+
+                    final VersionInfo versionInfo = new Gson().fromJson(jsonElement, VersionInfo.class);
+                    if (null != versionInfo) {
+                        //是否为最新版本
+                        if (UpdateAppUtil.haveNewVersion(versionInfo)) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    UpdateAppUtil.getInstance(MainActivity.this, defaultAppName, appIcon).showUpdateVersionDialog(versionInfo);
                                 }
-                            }
+                            });
+                        } else {
+                            MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                         }
                     }
-                });
+                }
+            }
+        });
     }
 
 }
