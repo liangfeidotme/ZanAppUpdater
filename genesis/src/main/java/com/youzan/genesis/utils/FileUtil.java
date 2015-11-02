@@ -9,9 +9,6 @@ import java.io.File;
  */
 public class FileUtil {
 
-    /*
-     * /storage/emulated/0/koudaitong/download/wsc.apk
-     */
     private static String SDPATH = Environment.getExternalStorageDirectory() + File.separator;
     private static String APP_PATH = SDPATH + "koudaitong" + File.separator;
     private static String DOWNLOAD_PATH = APP_PATH + "download" + File.separator;
@@ -26,5 +23,14 @@ public class FileUtil {
 
     public static String getDownloadAppFilePath(String apkName){
         return DOWNLOAD_PATH + apkName;
+    }
+
+    public static void deleteFile(String filePath) {
+        if (null != filePath) {
+            File file = new File(filePath);
+            if (file.exists()) {
+                file.delete();
+            }
+        }
     }
 }
