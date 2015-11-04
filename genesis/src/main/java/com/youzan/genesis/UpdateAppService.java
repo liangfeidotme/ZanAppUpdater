@@ -72,7 +72,7 @@ public class UpdateAppService extends Service {
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
 
                 builder.setSmallIcon(iconDrawable)
-                        .setContentTitle(getApplicationContext().getString(R.string.app_name))
+                        .setContentTitle(apkFile.getName())
                         .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
                         .setContentIntent(retryIntent)
                         .setWhen(System.currentTimeMillis())
