@@ -83,6 +83,21 @@ public class UpdateAppUtil {
     }
 
     /**
+     * 默认弹框
+     * 强制更新
+     * 供外部调用
+     */
+    public void showUpdateVersionDialog(){
+        DialogUtil.showDialogNoNegativeButton(context, R.string.please_update_to_newest_version_hard, R.string.update_app_now,
+                new DialogUtil.OnClickListener() {
+                    @Override
+                    public void onClick() {
+                        readyTodownloadFile(null);
+                    }
+                }, false);
+    }
+
+    /**
      * 是否为新版本
      */
     public static boolean haveNewVersion(VersionInfo info) {
@@ -92,10 +107,31 @@ public class UpdateAppUtil {
         return info.isNeedUpgrade();
     }
 
-    private void readyTodownloadFile(final VersionInfo versionInfo) {
-        final String upgradeUrl = versionInfo.getUpgradeUrl();
-        final String apkName = getApkFileName(versionInfo.getVersionName());
-        final long apkSize = versionInfo.getFileSize();
+    /**
+     * 是否为可维护
+     */
+    public static boolean isVersionValid(VersionInfo versionInfo){
+        return null != versionInfo && versionInfo.isValid();
+    }
+
+    /**
+     * 外部可以直接下载
+     */
+    public void readyTodownloadFile(final VersionInfo versionInfo) {
+
+        final String upgradeUrl;
+        final String apkName;
+        final long apkSize;
+        if(null == versionInfo){
+            upgradeUrl = context.getString(R.string.update_address);
+            apkName = getApkFileName(null);
+            apkSize = -100;
+        }
+        else{
+            upgradeUrl = versionInfo.getUpgradeUrl();
+            apkName = getApkFileName(versionInfo.getVersionName());
+            apkSize = versionInfo.getFileSize();
+        }
 
         ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 

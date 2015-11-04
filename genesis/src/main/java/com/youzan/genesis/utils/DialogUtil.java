@@ -113,6 +113,28 @@ public class DialogUtil {
         alertDialog.show();
     }
 
+    public static void showDialogNoNegativeButton(Context context, int message, int positiveMessage, final OnClickListener positiveClickListener, boolean cancelable){
+        dismissDialog();
+        if(null != alertDialog && alertDialog.isShowing()) {
+            return;
+        }
+
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(context);
+        builder.setCancelable(cancelable)
+                .setPositiveButton(positiveMessage, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (null != positiveClickListener) {
+                            positiveClickListener.onClick();
+                        }
+                    }
+                })
+                .setMessage(message);
+        alertDialog = builder.create();
+        setDialogColor(context);
+        alertDialog.show();
+    }
+
     /**
      * 修改按钮颜色
      * @param context
