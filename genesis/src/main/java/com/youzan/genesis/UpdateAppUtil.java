@@ -2,6 +2,7 @@ package com.youzan.genesis;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -17,21 +18,23 @@ import com.youzan.genesis.utils.StringUtil;
  */
 public class UpdateAppUtil {
 
+    public static final String ARGS_APP_TYPE = "type";
+    public static final String APP_TYPE_WSC = "有赞微商城";
+    public static final String APP_TYPE_WXD = "有赞微小店";
+
     private Context context;
     private String defaultAppName;
-    private int iconId;
 
     private static UpdateAppUtil updateAppUtil;
 
-    private UpdateAppUtil(Context context, String defaultAppName, int iconId) {
+    private UpdateAppUtil(Context context, String type) {
         this.context = context;
-        this.defaultAppName = defaultAppName;
-        this.iconId = iconId;
+        this.defaultAppName = type;
     }
 
-    public static UpdateAppUtil getInstance(Context context, String defaultAppName, int iconId) {
+    public static UpdateAppUtil getInstance(Context context, String type) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, defaultAppName, iconId);
+            updateAppUtil = new UpdateAppUtil(context, type);
         return updateAppUtil;
     }
 
@@ -181,7 +184,7 @@ public class UpdateAppUtil {
         info.setFileName(fileName);
         info.setFileSize(fileSize);
         bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-        bundle.putInt(UpdateAppService.ARG_APP_ICON, iconId);
+        bundle.putString(ARGS_APP_TYPE, defaultAppName);
         updateIntent.putExtras(bundle);
         context.startService(updateIntent);
     }

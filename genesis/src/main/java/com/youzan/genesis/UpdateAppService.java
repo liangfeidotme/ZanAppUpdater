@@ -11,20 +11,17 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.view.View;
-import android.widget.RemoteViews;
 
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.youzan.genesis.info.DownloadInfo;
-import com.youzan.genesis.utils.DateUtil;
 import com.youzan.genesis.utils.FileUtil;
 import com.youzan.genesis.utils.StringUtil;
 import com.youzan.genesis.utils.ToastUtil;
@@ -41,22 +38,22 @@ import java.util.Date;
 public class UpdateAppService extends Service {
 
     public static final String ARG_DOWNLOAD_INFO = "DOWNLOAD_INFO";
-    public static final String ARG_APP_ICON = "APP_ICON";
+    private static boolean isDownloading = false;
+    private static final int DOWNLOAD_FAIL = -1;
+    private static final int DOWNLOAD_SUCCESS = 0;
+    private static final int NOTIFY_ID = 0xA1;
 
-    public static final int mNotificationId = R.id.app_name;
     private NotificationManager mNotificationManager = null;
     private PendingIntent mPendingIntent = null;
     private Notification mNotification = null;
+    private NotificationCompat.Builder mBuilder = null;
     private String mDownloadProgressStr = null;
     private File apkFile = null;
     private DownloadInfo downloadInfo;
-    private int iconID;
+    private String appType;
+    private int iconDrawable;
     private long lastDownload = 0L;
-
-    private static boolean isDownloading = false;
-
-    private static final int DOWNLOAD_FAIL = -1;
-    private static final int DOWNLOAD_SUCCESS = 0;
+    private Intent lastIntent;
 
     private void handleMessage(Message msg) {
         switch (msg.what) {
@@ -66,7 +63,7 @@ public class UpdateAppService extends Service {
                 break;
             case DOWNLOAD_FAIL:
                 ToastUtil.show(getApplicationContext(), R.string.download_fail);
-                mNotificationManager.cancel(mNotificationId);
+                mNotificationManager.cancel(NOTIFY_ID);
 
                 //重新下载
                 PendingIntent retryIntent = PendingIntent.getService(getApplicationContext(), 0,
@@ -74,7 +71,7 @@ public class UpdateAppService extends Service {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
 
-                builder.setSmallIcon(iconID)
+                builder.setSmallIcon(iconDrawable)
                         .setContentTitle(getApplicationContext().getString(R.string.app_name))
                         .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
                         .setContentIntent(retryIntent)
@@ -82,7 +79,8 @@ public class UpdateAppService extends Service {
                         .setAutoCancel(true)
                         .setOngoing(false);
                 Notification notification = builder.build();
-                mNotificationManager.notify(mNotificationId, notification);
+                mNotificationManager.notify(NOTIFY_ID, notification);
+
                 break;
             default:
                 break;
@@ -96,6 +94,7 @@ public class UpdateAppService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
         if (isDownloading) {
             return super.onStartCommand(intent, flags, startId);
         }
@@ -105,8 +104,6 @@ public class UpdateAppService extends Service {
         if (null == downloadInfo) {
             return super.onStartCommand(intent, flags, startId);
         }
-
-        mDownloadProgressStr = getApplicationContext().getString(R.string.download_progress);
 
         if (FileUtil.isSDCardStateOn()
                 && !FileUtil.isSDCardReadOnly()) {
@@ -125,45 +122,25 @@ public class UpdateAppService extends Service {
             return super.onStartCommand(intent, flags, startId);
         }
 
-        mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotification = new Notification();
-        mNotification.contentView = new RemoteViews(getApplication().getPackageName(), R.layout.update_app_notification);
+        showNotification();
 
-        Intent completingIntent = new Intent();
-        completingIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        completingIntent.setClass(getApplication().getApplicationContext(), UpdateAppService.class);
-
-        mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, R.string.app_name, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mNotification.icon = iconID;
-        mNotification.when = System.currentTimeMillis();
-        mNotification.tickerText = getApplicationContext().getString(R.string.download_start);
-        mNotification.contentIntent = mPendingIntent;
-        mNotification.contentView.setImageViewResource(R.id.app_icon, iconID);
-        mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, 0, false);
-        mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, 0) + "%");
-        mNotification.contentView.setTextViewText(R.id.app_update_time, DateUtil.getCurrentTimeForNotification());
-        mNotificationManager.cancel(mNotificationId);
-        mNotificationManager.notify(mNotificationId, mNotification);
         new AsyncDownloader(downloadInfo.getDownloadUrl()).execute();
 
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private Intent lastIntent;
-
     private void initParam(Intent intent) {
         if (intent == null) {
             return;
         }
-
+        mDownloadProgressStr = getApplicationContext().getString(R.string.download_progress);
         lastIntent = intent;
 
         Bundle bundle = lastIntent.getExtras();
         if (bundle != null) {
-            iconID = bundle.getInt(ARG_APP_ICON, R.drawable.ic_launcher);
+            appType = bundle.getString(UpdateAppUtil.ARGS_APP_TYPE);
+            iconDrawable = appType.equals(UpdateAppUtil.APP_TYPE_WXD) ? R.drawable.wxd_icon : R.drawable.wsc_icon;
         }
-
         Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
             downloadInfo = (DownloadInfo) parcelable;
@@ -172,6 +149,36 @@ public class UpdateAppService extends Service {
             stopSelf();
         }
     }
+
+    /**
+     *  显示通知
+     */
+    private void showNotification() {
+        if (null == mNotificationManager) {
+            mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+
+        Intent completingIntent = new Intent();
+        completingIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        completingIntent.setClass(getApplication().getApplicationContext(), UpdateAppService.class);
+        mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, NOTIFY_ID, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mBuilder = new NotificationCompat.Builder(this);
+        mBuilder.setSmallIcon(iconDrawable)
+                .setContentIntent(mPendingIntent)
+                .setWhen(System.currentTimeMillis())
+                .setDefaults(~Notification.DEFAULT_ALL)
+                .setAutoCancel(false)
+                .setOngoing(true)
+                .setContentTitle(getString(R.string.download_start))
+                .setProgress(100, 0, false);
+        mNotification = mBuilder.build();
+        mNotification.flags = Notification.FLAG_ONGOING_EVENT;
+
+        mNotificationManager.cancel(NOTIFY_ID);
+        mNotificationManager.notify(NOTIFY_ID, mNotification);
+    }
+
 
     private class AsyncDownloader extends AsyncTask<Void, Long, Boolean> {
 
@@ -244,11 +251,17 @@ public class UpdateAppService extends Service {
 
         @Override
         protected void onProgressUpdate(Long... values) {
-            mNotification.tickerText = getApplicationContext().getString(R.string.downloading);
-            mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, (int) ((values[0] * 100) / values[1]), false);
-            mNotification.contentView.setTextViewText(R.id.app_update_progress_text,
-                    String.format(mDownloadProgressStr, 100 * values[0] / values[1]) + "%");
-            mNotificationManager.notify(mNotificationId, mNotification);
+            if (values[0] < values[1]) {
+                long progress = (values[0] * 100) / values[1];
+                mBuilder.setProgress(100, (int) progress, false)
+                        .setContentTitle(downloadInfo.getFileName())
+                        .setContentText(String.format(mDownloadProgressStr, progress) + "%");
+            } else {
+                mBuilder.setProgress(0, 0, false);
+            }
+            mNotification = mBuilder.build();
+            mNotificationManager.notify(NOTIFY_ID, mNotification);
+
         }
 
         @Override
@@ -258,7 +271,7 @@ public class UpdateAppService extends Service {
                 mNotification.contentView.setViewVisibility(R.id.app_update_progress, View.GONE);
                 mNotification.contentIntent = mPendingIntent;
                 mNotification.contentView.setTextViewText(R.id.app_update_progress_text, getApplicationContext().getString(R.string.download_done));
-                mNotificationManager.notify(mNotificationId, mNotification);
+                mNotificationManager.notify(NOTIFY_ID, mNotification);
                 if (apkFile.exists() && apkFile.isFile()
                         && checkApkFileValid(apkFile.getPath())) {
                     Message msg = Message.obtain();
@@ -269,7 +282,7 @@ public class UpdateAppService extends Service {
                     msg.what = DOWNLOAD_FAIL;
                     handleMessage(msg);
                 }
-                mNotificationManager.cancel(mNotificationId);
+                mNotificationManager.cancel(NOTIFY_ID);
             } else {
                 Message msg = Message.obtain();
                 msg.what = DOWNLOAD_FAIL;
