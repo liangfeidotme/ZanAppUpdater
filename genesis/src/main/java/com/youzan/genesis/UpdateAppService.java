@@ -161,7 +161,7 @@ public class UpdateAppService extends Service {
 
         Bundle bundle = lastIntent.getExtras();
         if (bundle != null) {
-            iconID = bundle.getInt(ARG_APP_ICON, 0);
+            iconID = bundle.getInt(ARG_APP_ICON, R.drawable.ic_launcher);
         }
 
         Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
