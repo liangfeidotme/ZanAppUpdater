@@ -3,7 +3,6 @@ package com.youzan.genesis.info;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by Francis on 15/10/28.
@@ -20,48 +19,38 @@ public class VersionInfo implements Parcelable {
         }
     };
 
-    @SerializedName("is_valid")
-    private boolean isValid;//当前版本是否可用
-    @SerializedName("need_upgrade")
-    private boolean needUpgrade;//当前版本是否需要升级
-    @SerializedName("title")
+    private boolean is_valid;//当前版本是否可用
+    private boolean need_upgrade;//当前版本是否需要升级
     private String title;//升级提示标题
-    @SerializedName("content")
     private String content;//新版本更新内容（每条内容间以半角分号“;”划分）//处理成: \n
-    @SerializedName("download")
-    private String upgradeUrl;//新版本下载地址
-    @SerializedName("file_size")
-    private long fileSize;//新版本大小，字节
-    @SerializedName("version")
-    private String versionName;//新版本版本号
-
-    public VersionInfo() {
-    }
+    private String download;//新版本下载地址
+    private long file_size;//新版本大小，字节
+    private String version;//新版本版本号
 
     private VersionInfo(Parcel in) {
-        this.isValid = in.readByte() != 0;
-        this.needUpgrade = in.readByte() != 0;
+        this.is_valid = in.readByte() != 0;
+        this.need_upgrade = in.readByte() != 0;
         this.title = in.readString();
         this.content = in.readString();
-        this.upgradeUrl = in.readString();
-        this.fileSize = in.readLong();
-        this.versionName = in.readString();
+        this.download = in.readString();
+        this.file_size = in.readLong();
+        this.version = in.readString();
     }
 
-    public boolean isValid() {
-        return isValid;
+    public boolean isIs_valid() {
+        return is_valid;
     }
 
-    public void setIsValid(boolean isValid) {
-        this.isValid = isValid;
+    public void setIs_valid(boolean isValid) {
+        this.is_valid = isValid;
     }
 
-    public boolean isNeedUpgrade() {
-        return needUpgrade;
+    public boolean isNeed_upgrade() {
+        return need_upgrade;
     }
 
-    public void setNeedUpgrade(boolean needUpgrade) {
-        this.needUpgrade = needUpgrade;
+    public void setNeed_upgrade(boolean need_upgrade) {
+        this.need_upgrade = need_upgrade;
     }
 
     public String getTitle() {
@@ -80,40 +69,40 @@ public class VersionInfo implements Parcelable {
         this.content = content;
     }
 
-    public String getUpgradeUrl() {
-        return upgradeUrl;
+    public String getDownload() {
+        return download;
     }
 
-    public void setUpgradeUrl(String upgradeUrl) {
-        this.upgradeUrl = upgradeUrl;
+    public void setDownload(String download) {
+        this.download = download;
     }
 
-    public long getFileSize() {
-        return fileSize;
+    public long getFile_size() {
+        return file_size;
     }
 
-    public void setFileSize(long fileSize) {
-        this.fileSize = fileSize;
+    public void setFile_size(long file_size) {
+        this.file_size = file_size;
     }
 
-    public String getVersionName() {
-        return versionName;
+    public String getVersion() {
+        return version;
     }
 
-    public void setVersionName(String versionName) {
-        this.versionName = versionName;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     @Override
     public String toString() {
         return "VersionInfo{" +
-                "isValid=" + isValid +
-                ", needUpgrade=" + needUpgrade +
+                "is_valid=" + is_valid +
+                ", need_upgrade=" + need_upgrade +
                 ", title='" + title + '\'' +
                 ", content='" + content + '\'' +
-                ", upgradeUrl='" + upgradeUrl + '\'' +
-                ", fileSize='" + fileSize + '\'' +
-                ", versionName='" + versionName + '\'' +
+                ", download='" + download + '\'' +
+                ", file_size='" + file_size + '\'' +
+                ", version='" + version + '\'' +
                 '}';
     }
 
@@ -124,12 +113,12 @@ public class VersionInfo implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeByte(isValid ? (byte) 1 : (byte) 0);
-        dest.writeByte(needUpgrade ? (byte) 1 : (byte) 0);
+        dest.writeByte(is_valid ? (byte) 1 : (byte) 0);
+        dest.writeByte(need_upgrade ? (byte) 1 : (byte) 0);
         dest.writeString(this.title);
         dest.writeString(this.content);
-        dest.writeString(this.upgradeUrl);
-        dest.writeLong(this.fileSize);
-        dest.writeString(this.versionName);
+        dest.writeString(this.download);
+        dest.writeLong(this.file_size);
+        dest.writeString(this.version);
     }
 }

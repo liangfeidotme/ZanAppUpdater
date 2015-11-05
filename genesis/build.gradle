@@ -7,8 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode 1
-        versionName "0.0.1"
+        versionCode 4
+        versionName "0.0.4"
     }
     buildTypes {
         release {
@@ -23,7 +23,7 @@ uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: '../../maven_local_repo/')
-            pom.version = '0.0.3-snapshot'
+            pom.version = '0.0.4-snapshot'
             pom.groupId = 'com.youzan.genesis'
             pom.artifactId = "genesis"
         }
@@ -33,9 +33,4 @@ uploadArchives {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.2.1'
-
-    compile 'com.google.code.gson:gson:2.3'
-    compile 'com.squareup.okio:okio:1.5.0'
-    compile 'com.squareup.okhttp:okhttp:2.5.0'
-
 }

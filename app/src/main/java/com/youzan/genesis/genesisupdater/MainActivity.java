@@ -31,9 +31,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * for test
      */
-    //private static String CHECK_URL = "http://open.koudaitong.com/api/entry?v=1.0&sign=888d3eadc51ab458ecab5407c8d8816d&method=wsc.version.valid&sign_method=md5&version=3.0.0&app_id=a424d52df7f0723d6a33&timestamp=2015-11-02+11:49:28&type=android&format=json";
-    private static String CHECK_URL = "http://open.koudaitong.com/api/entry?sign=a4dfd87aba2d950fa74e1182fbac653c&sign_method=md5&timestamp=2015-11-04+11:52:20&v=1.0&method=wsc.version.valid&app_id=a424d52df7f0723d6a33&format=json&type=android&version=3.1.1";
-
+    private static String CHECK_URL = "http://open.koudaitong.com/api/entry?v=1.0&sign=888d3eadc51ab458ecab5407c8d8816d&method=wsc.version.valid&sign_method=md5&version=3.0.0&app_id=a424d52df7f0723d6a33&timestamp=2015-11-02+11:49:28&type=android&format=json";
+    //private static String CHECK_URL = "http://open.koudaitong.com/api/entry?sign=a4dfd87aba2d950fa74e1182fbac653c&sign_method=md5&timestamp=2015-11-04+11:52:20&v=1.0&method=wsc.version.valid&app_id=a424d52df7f0723d6a33&format=json&type=android&version=3.1.1";
     private static final String PREF_VERSION_CHECK_TIME = "PREF_VERSION_CHECK_TIME";
     private static final long VERSION_CHECK_INTERVAL = 2 * 24 * 60 * 60 * 1000;
     private static final String TYPE = UpdateAppUtil.APP_TYPE_WSC;
@@ -57,9 +56,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @param checkUrl      检查版本更新的Url
-     * @param prefName      preference名称，纪录更新
-     * @param checkInterval 检查更新的周期
+     * 项目发起检查版本的请求  传递App类型和返回的VersionInfo
      * @param type          app类型，{@link UpdateAppUtil.APP_TYPE_WSC} 或者 {@link UpdateAppUtil.APP_TYPE_WXD}
      */
     private void checkUpdate(String checkUrl, final String prefName, long checkInterval, final String type) {
@@ -68,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < checkInterval) {
-            return;
+           // return;
         }
 
         OkHttpClient mOkHttpClient = new OkHttpClient();
@@ -94,13 +91,9 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
 
-                                //if (!UpdateAppUtil.isVersionValid(versionInfo)) {
-                                UpdateAppUtil.getInstance(MainActivity.this, type).showUpdateVersionDialog();
-//                                } else if (UpdateAppUtil.haveNewVersion(versionInfo)) {
-//                                    UpdateAppUtil.getInstance(MainActivity.this, "wsc", R.drawable.app_icon).showUpdateVersionDialog(versionInfo);
-//                                } else {
-//                                    MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
-//                                }
+                                UpdateAppUtil.getInstance(MainActivity.this,type).showDialog(versionInfo);
+
+                                MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                             }
                         });
                     }

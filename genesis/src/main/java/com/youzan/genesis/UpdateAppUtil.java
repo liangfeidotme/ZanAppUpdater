@@ -2,7 +2,6 @@ package com.youzan.genesis;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -39,13 +38,21 @@ public class UpdateAppUtil {
     }
 
 
+    public void showDialog(VersionInfo versionInfo){
+        if (!isVersionValid(versionInfo)){
+            showUpdateVersionDialog();
+        }else if (haveNewVersion(versionInfo)){
+            showUpdateVersionDialog(versionInfo);
+        }
+    }
+
     /**
      * 根据返回的 version info 弹框
      * 提示更新
-     *
      * @param versionInfo
      */
     public void showUpdateVersionDialog(final VersionInfo versionInfo) {
+
         //只显示title
         if ("".equals(versionInfo.getContent())) {
             DialogUtil.showDialog(context, versionInfo.getTitle(),
@@ -107,14 +114,14 @@ public class UpdateAppUtil {
         if (info == null) {
             return false;
         }
-        return info.isNeedUpgrade();
+        return info.isNeed_upgrade();
     }
 
     /**
      * 是否为可维护
      */
     public static boolean isVersionValid(VersionInfo versionInfo){
-        return null != versionInfo && versionInfo.isValid();
+        return null != versionInfo && versionInfo.isIs_valid();
     }
 
     /**
@@ -131,9 +138,9 @@ public class UpdateAppUtil {
             apkSize = -100;
         }
         else{
-            upgradeUrl = versionInfo.getUpgradeUrl();
-            apkName = getApkFileName(versionInfo.getVersionName());
-            apkSize = versionInfo.getFileSize();
+            upgradeUrl = versionInfo.getDownload();
+            apkName = getApkFileName(versionInfo.getVersion());
+            apkSize = versionInfo.getFile_size();
         }
 
         ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -193,7 +200,7 @@ public class UpdateAppUtil {
         if (versionInfo == null) {
             return new SpannableStringBuilder();
         }
-        String fileSizeText = String.format("\n安装包大小: %s", StringUtil.friendlyFileSize(versionInfo.getFileSize()));
+        String fileSizeText = String.format("\n安装包大小: %s", StringUtil.friendlyFileSize(versionInfo.getFile_size()));
         String contentText = String.format("%s\n%s", versionInfo.getContent(), fileSizeText).replace(";", "\n");
 
         return new SpannableStringBuilder(contentText);
