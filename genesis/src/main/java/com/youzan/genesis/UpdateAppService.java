@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
@@ -44,6 +43,7 @@ public class UpdateAppService extends Service {
     private File apkFile = null;
     private DownloadInfo downloadInfo;
     private String appType;
+    private int appIcon;
     //private long lastDownload = 0L;
     private Intent lastIntent;
 
@@ -63,7 +63,7 @@ public class UpdateAppService extends Service {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
 
-                builder.setSmallIcon(getNotificationIcon(appType))
+                builder.setSmallIcon(appIcon)
                         .setContentTitle(apkFile.getName())
                         .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
                         .setContentIntent(retryIntent)
@@ -132,7 +132,8 @@ public class UpdateAppService extends Service {
 
         Bundle bundle = lastIntent.getExtras();
         if (bundle != null) {
-            appType = bundle.getString(UpdateAppUtil.ARGS_APP_TYPE);
+            appType = bundle.getString(UpdateAppUtil.ARGS_APP_NAME);
+            appIcon = bundle.getInt(UpdateAppUtil.ARGS_APP_ICON);
         }
         Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
@@ -157,7 +158,7 @@ public class UpdateAppService extends Service {
         mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, NOTIFY_ID, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mBuilder = new NotificationCompat.Builder(this);
-        mBuilder.setSmallIcon(getNotificationIcon(appType))
+        mBuilder.setSmallIcon(appIcon)
                 .setContentIntent(mPendingIntent)
                 .setWhen(System.currentTimeMillis())
                 .setDefaults(~Notification.DEFAULT_ALL)
@@ -279,14 +280,6 @@ public class UpdateAppService extends Service {
 //            stopSelf();
 //        }
 //    }
-
-    private int getNotificationIcon(String appType) {
-        boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-        if (whiteIcon){
-            return appType.equals(UpdateAppUtil.APP_TYPE_WXD) ? R.drawable.wxd_icon_trans : R.drawable.wsc_icon_trans;
-        }
-        return appType.equals(UpdateAppUtil.APP_TYPE_WXD) ? R.drawable.wxd_icon : R.drawable.wsc_icon;
-    }
 
     private void startDownload(){
         DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, false, new DownloadUtil.DownloadListener() {

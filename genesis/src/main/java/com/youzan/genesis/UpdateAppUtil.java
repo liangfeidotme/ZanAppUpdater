@@ -17,23 +17,25 @@ import com.youzan.genesis.utils.StringUtil;
  */
 public class UpdateAppUtil {
 
-    public static final String ARGS_APP_TYPE = "type";
-    public static final String APP_TYPE_WSC = "有赞微商城";
-    public static final String APP_TYPE_WXD = "有赞微小店";
+    public static final String ARGS_APP_NAME = "app_name";
+    public static final String ARGS_APP_ICON = "app_icon";
 
     private Context context;
     private String defaultAppName;
 
     private static UpdateAppUtil updateAppUtil;
 
-    private UpdateAppUtil(Context context, String type) {
+    private int appIcon;
+
+    private UpdateAppUtil(Context context, String defaultAppName,int appIcon) {
         this.context = context;
-        this.defaultAppName = type;
+        this.defaultAppName = defaultAppName;
+        this.appIcon = appIcon;
     }
 
-    public static UpdateAppUtil getInstance(Context context, String type) {
+    public static UpdateAppUtil getInstance(Context context, String defaultAppName,int appIcon) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, type);
+            updateAppUtil = new UpdateAppUtil(context, defaultAppName,appIcon);
         return updateAppUtil;
     }
 
@@ -191,7 +193,8 @@ public class UpdateAppUtil {
         info.setFileName(fileName);
         info.setFileSize(fileSize);
         bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-        bundle.putString(ARGS_APP_TYPE, defaultAppName);
+        bundle.putString(ARGS_APP_NAME, defaultAppName);
+        bundle.putInt(ARGS_APP_ICON,appIcon);
         updateIntent.putExtras(bundle);
         context.startService(updateIntent);
     }
