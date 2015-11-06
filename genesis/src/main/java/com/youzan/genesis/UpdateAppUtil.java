@@ -2,12 +2,9 @@ package com.youzan.genesis;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.annotation.DrawableRes;
 import android.text.SpannableStringBuilder;
 
 import com.youzan.genesis.info.DownloadInfo;
@@ -21,29 +18,28 @@ import com.youzan.genesis.utils.StringUtil;
 public class UpdateAppUtil {
 
     public static final String ARGS_APP_NAME = "app_name";
-    public static final String ARGS_APP_ICON = "app_icon";
+    public static final String APP_TYPE_WSC = "有赞微商城";
+    public static final String APP_TYPE_WXD = "有赞微小店";
 
     private Context context;
     private String defaultAppName;
 
     private static UpdateAppUtil updateAppUtil;
 
-    private Bitmap appIcon;
-
-    private UpdateAppUtil(Context context, String defaultAppName, Bitmap icon) {
+    private UpdateAppUtil(Context context, String defaultAppName) {
         this.context = context;
         this.defaultAppName = defaultAppName;
-        this.appIcon = icon;
-
     }
 
-    public static UpdateAppUtil getInstance(Context context, String defaultAppName, Bitmap icon) {
+    public static UpdateAppUtil getInstance(Context context, String defaultAppName) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, defaultAppName, icon);
+            updateAppUtil = new UpdateAppUtil(context, defaultAppName);
         return updateAppUtil;
     }
 
-
+    /**
+     * 对外部提供的主入口
+     */
     public void showDialog(VersionInfo versionInfo) {
         if (!isVersionValid(versionInfo)) {
             showUpdateVersionDialog();
@@ -53,10 +49,7 @@ public class UpdateAppUtil {
     }
 
     /**
-     * 根据返回的 version info 弹框
-     * 提示更新
-     *
-     * @param versionInfo
+     * 可取消的dialog
      */
     public void showUpdateVersionDialog(final VersionInfo versionInfo) {
 
@@ -100,9 +93,7 @@ public class UpdateAppUtil {
     }
 
     /**
-     * 默认弹框
-     * 强制更新
-     * 供外部调用
+     * 强制更新 不可取消
      */
     public void showUpdateVersionDialog() {
         DialogUtil.showDialogNoNegativeButton(context, R.string.please_update_to_newest_version_hard, R.string.update_app_now,
@@ -132,7 +123,7 @@ public class UpdateAppUtil {
     }
 
     /**
-     * 外部可以直接下载
+     * 直接下载，不显示dialog
      */
     public void readyTodownloadFile(final VersionInfo versionInfo) {
 
@@ -198,7 +189,6 @@ public class UpdateAppUtil {
         info.setFileSize(fileSize);
         bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
         bundle.putString(ARGS_APP_NAME, defaultAppName);
-        bundle.putParcelable(ARGS_APP_ICON, appIcon);
         updateIntent.putExtras(bundle);
         context.startService(updateIntent);
     }

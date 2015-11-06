@@ -1,10 +1,7 @@
 package com.youzan.genesis.genesisupdater;
 
 import android.content.SharedPreferences;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.support.annotation.DrawableRes;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
@@ -29,13 +26,10 @@ import java.io.IOException;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String RESPONSE = "response";
-
-    String iconName = "app_icon";
-
     /**
      * for test
      */
+    private static final String RESPONSE = "response";
     private static String CHECK_URL = "http://open.koudaitong.com/api/entry?v=1.0&sign=888d3eadc51ab458ecab5407c8d8816d&method=wsc.version.valid&sign_method=md5&version=3.0.0&app_id=a424d52df7f0723d6a33&timestamp=2015-11-02+11:49:28&type=android&format=json";
     //private static String CHECK_URL = "http://open.koudaitong.com/api/entry?sign=a4dfd87aba2d950fa74e1182fbac653c&sign_method=md5&timestamp=2015-11-04+11:52:20&v=1.0&method=wsc.version.valid&app_id=a424d52df7f0723d6a33&format=json&type=android&version=3.1.1";
     private static final String PREF_VERSION_CHECK_TIME = "PREF_VERSION_CHECK_TIME";
@@ -69,7 +63,8 @@ public class MainActivity extends AppCompatActivity {
 
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < checkInterval) {
-           // return;
+            // for test
+            // return;
         }
 
         OkHttpClient mOkHttpClient = new OkHttpClient();
@@ -95,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
 
-                                UpdateAppUtil.getInstance(MainActivity.this, "wsc", BitmapFactory.decodeResource(getResources(), R.drawable.app_icon)).showDialog(versionInfo);
+                                UpdateAppUtil.getInstance(MainActivity.this, UpdateAppUtil.APP_TYPE_WSC).showDialog(versionInfo);
 
                                 MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                             }

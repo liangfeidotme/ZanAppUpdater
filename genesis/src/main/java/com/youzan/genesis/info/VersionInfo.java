@@ -19,14 +19,6 @@ public class VersionInfo implements Parcelable {
         }
     };
 
-    private boolean is_valid;//当前版本是否可用
-    private boolean need_upgrade;//当前版本是否需要升级
-    private String title;//升级提示标题
-    private String content;//新版本更新内容（每条内容间以半角分号“;”划分）//处理成: \n
-    private String download;//新版本下载地址
-    private long file_size;//新版本大小，字节
-    private String version;//新版本版本号
-
     private VersionInfo(Parcel in) {
         this.is_valid = in.readByte() != 0;
         this.need_upgrade = in.readByte() != 0;
@@ -36,6 +28,14 @@ public class VersionInfo implements Parcelable {
         this.file_size = in.readLong();
         this.version = in.readString();
     }
+
+    private boolean is_valid;//当前版本是否可用
+    private boolean need_upgrade;//当前版本是否需要升级
+    private String title;//升级提示标题
+    private String content;//新版本更新内容（每条内容间以半角分号“;”划分）//处理成: \n
+    private String download;//新版本下载地址
+    private long file_size;//新版本大小，字节
+    private String version;//新版本版本号
 
     public boolean isIs_valid() {
         return is_valid;
