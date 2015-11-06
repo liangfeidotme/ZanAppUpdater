@@ -44,7 +44,6 @@ public class UpdateAppService extends Service {
     private File apkFile = null;
     private DownloadInfo downloadInfo;
     private String appType;
-    @DrawableRes
     private int appIcon;
     //private long lastDownload = 0L;
     private Intent lastIntent;

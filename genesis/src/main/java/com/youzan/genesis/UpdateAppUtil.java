@@ -26,26 +26,25 @@ public class UpdateAppUtil {
 
     private static UpdateAppUtil updateAppUtil;
 
-    @DrawableRes
     private int appIcon;
 
-    private UpdateAppUtil(Context context, String defaultAppName,int appIcon) {
+    private UpdateAppUtil(Context context, String defaultAppName, @DrawableRes int appIcon) {
         this.context = context;
         this.defaultAppName = defaultAppName;
         this.appIcon = appIcon;
     }
 
-    public static UpdateAppUtil getInstance(Context context, String defaultAppName,int appIcon) {
+    public static UpdateAppUtil getInstance(Context context, String defaultAppName, int appIcon) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, defaultAppName,appIcon);
+            updateAppUtil = new UpdateAppUtil(context, defaultAppName, appIcon);
         return updateAppUtil;
     }
 
 
-    public void showDialog(VersionInfo versionInfo){
-        if (!isVersionValid(versionInfo)){
+    public void showDialog(VersionInfo versionInfo) {
+        if (!isVersionValid(versionInfo)) {
             showUpdateVersionDialog();
-        }else if (haveNewVersion(versionInfo)){
+        } else if (haveNewVersion(versionInfo)) {
             showUpdateVersionDialog(versionInfo);
         }
     }
@@ -53,6 +52,7 @@ public class UpdateAppUtil {
     /**
      * 根据返回的 version info 弹框
      * 提示更新
+     *
      * @param versionInfo
      */
     public void showUpdateVersionDialog(final VersionInfo versionInfo) {
@@ -101,7 +101,7 @@ public class UpdateAppUtil {
      * 强制更新
      * 供外部调用
      */
-    public void showUpdateVersionDialog(){
+    public void showUpdateVersionDialog() {
         DialogUtil.showDialogNoNegativeButton(context, R.string.please_update_to_newest_version_hard, R.string.update_app_now,
                 new DialogUtil.OnClickListener() {
                     @Override
@@ -124,7 +124,7 @@ public class UpdateAppUtil {
     /**
      * 是否为可维护
      */
-    public static boolean isVersionValid(VersionInfo versionInfo){
+    public static boolean isVersionValid(VersionInfo versionInfo) {
         return null != versionInfo && versionInfo.isIs_valid();
     }
 
@@ -136,12 +136,11 @@ public class UpdateAppUtil {
         final String upgradeUrl;
         final String apkName;
         final long apkSize;
-        if(null == versionInfo){
+        if (null == versionInfo) {
             upgradeUrl = context.getString(R.string.update_address);
             apkName = getApkFileName(null);
             apkSize = -100;
-        }
-        else{
+        } else {
             upgradeUrl = versionInfo.getDownload();
             apkName = getApkFileName(versionInfo.getVersion());
             apkSize = versionInfo.getFile_size();
@@ -196,7 +195,7 @@ public class UpdateAppUtil {
         info.setFileSize(fileSize);
         bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
         bundle.putString(ARGS_APP_NAME, defaultAppName);
-        bundle.putInt(ARGS_APP_ICON,appIcon);
+        bundle.putInt(ARGS_APP_ICON, appIcon);
         updateIntent.putExtras(bundle);
         context.startService(updateIntent);
     }

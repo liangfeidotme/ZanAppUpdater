@@ -29,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String RESPONSE = "response";
 
-    @DrawableRes
     int appIcon = R.drawable.app_icon;
 
     /**
