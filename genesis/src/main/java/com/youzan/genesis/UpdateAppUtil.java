@@ -2,6 +2,7 @@ package com.youzan.genesis;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -28,15 +29,16 @@ public class UpdateAppUtil {
 
     private int appIcon;
 
-    private UpdateAppUtil(Context context, String defaultAppName, @DrawableRes int appIcon) {
+    private UpdateAppUtil(Context context, String defaultAppName, String iconName) {
         this.context = context;
         this.defaultAppName = defaultAppName;
-        this.appIcon = appIcon;
+        this.appIcon = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+
     }
 
-    public static UpdateAppUtil getInstance(Context context, String defaultAppName, int appIcon) {
+    public static UpdateAppUtil getInstance(Context context, String defaultAppName, String iconName) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, defaultAppName, appIcon);
+            updateAppUtil = new UpdateAppUtil(context, defaultAppName, iconName);
         return updateAppUtil;
     }
 

@@ -15,8 +15,10 @@ import android.os.Message;
 import android.os.Parcelable;
 import android.support.annotation.DrawableRes;
 import android.support.v4.app.NotificationCompat;
+import android.widget.RemoteViews;
 
 import com.youzan.genesis.info.DownloadInfo;
+import com.youzan.genesis.utils.DateUtil;
 import com.youzan.genesis.utils.DownloadUtil;
 import com.youzan.genesis.utils.FileUtil;
 import com.youzan.genesis.utils.StringUtil;
@@ -64,7 +66,8 @@ public class UpdateAppService extends Service {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
 
-                builder.setSmallIcon(appIcon)
+                builder
+                        .setSmallIcon(appIcon)
                         .setContentTitle(apkFile.getName())
                         .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
                         .setContentIntent(retryIntent)
@@ -73,6 +76,23 @@ public class UpdateAppService extends Service {
                         .setOngoing(false);
                 Notification notification = builder.build();
                 mNotificationManager.notify(NOTIFY_ID, notification);
+
+//                if (null == mNotificationManager) {
+//                    mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+//                }
+//                mNotification = new Notification();
+//
+//                mNotification.contentView = new RemoteViews(getApplication().getPackageName(), R.layout.update_app_notification);
+//
+//                //mNotification.icon = R.drawable.;
+//                mNotification.when = System.currentTimeMillis();
+//                mNotification.tickerText = getApplicationContext().getString(R.string.download_start);
+//                mNotification.contentIntent = mPendingIntent;
+//                mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, 0, false);
+//                mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, 0) + "%");
+//                mNotification.contentView.setTextViewText(R.id.app_update_time, DateUtil.getCurrentTimeForNotification());
+//                mNotificationManager.cancel(NOTIFY_ID);
+//                mNotificationManager.notify(NOTIFY_ID, mNotification);
 
                 break;
             default:
@@ -172,6 +192,24 @@ public class UpdateAppService extends Service {
 
         mNotificationManager.cancel(NOTIFY_ID);
         mNotificationManager.notify(NOTIFY_ID, mNotification);
+
+
+//        if (null == mNotificationManager) {
+//            mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+//        }
+//        mNotification = new Notification();
+//
+//        mNotification.contentView = new RemoteViews(getApplication().getPackageName(), R.layout.update_app_notification);
+//
+//        //mNotification.icon = R.drawable.;
+//        mNotification.when = System.currentTimeMillis();
+//        mNotification.tickerText = getApplicationContext().getString(R.string.download_start);
+//        mNotification.contentIntent = mPendingIntent;
+//        mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, 0, false);
+//        mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, 0) + "%");
+//        mNotification.contentView.setTextViewText(R.id.app_update_time, DateUtil.getCurrentTimeForNotification());
+//        mNotificationManager.cancel(NOTIFY_ID);
+//        mNotificationManager.notify(NOTIFY_ID, mNotification);
     }
 
 

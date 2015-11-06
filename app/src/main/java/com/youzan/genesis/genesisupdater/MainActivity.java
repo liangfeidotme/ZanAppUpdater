@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String RESPONSE = "response";
 
-    int appIcon = R.drawable.app_icon;
+    String iconName = "app_icon";
 
     /**
      * for test
@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
 
-                                UpdateAppUtil.getInstance(MainActivity.this,"wsc",appIcon).showDialog(versionInfo);
+                                UpdateAppUtil.getInstance(MainActivity.this,"wsc",iconName).showDialog(versionInfo);
 
                                 MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                             }
