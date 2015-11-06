@@ -1,6 +1,8 @@
 package com.youzan.genesis.genesisupdater;
 
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.annotation.DrawableRes;
 import android.support.v7.app.AppCompatActivity;
@@ -93,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
 
-                                UpdateAppUtil.getInstance(MainActivity.this,"wsc",iconName).showDialog(versionInfo);
+                                UpdateAppUtil.getInstance(MainActivity.this, "wsc", BitmapFactory.decodeResource(getResources(), R.drawable.app_icon)).showDialog(versionInfo);
 
                                 MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                             }

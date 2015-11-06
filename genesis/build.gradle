@@ -23,7 +23,7 @@ uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: '../../maven_local_repo/')
-            pom.version = '0.0.8-snapshot'
+            pom.version = '0.0.9-snapshot'
             pom.groupId = 'com.youzan.genesis'
             pom.artifactId = "genesis"
         }

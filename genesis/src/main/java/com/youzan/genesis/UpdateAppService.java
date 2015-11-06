@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -46,7 +47,7 @@ public class UpdateAppService extends Service {
     private File apkFile = null;
     private DownloadInfo downloadInfo;
     private String appType;
-    private int appIcon;
+    private Bitmap appIcon;
     //private long lastDownload = 0L;
     private Intent lastIntent;
 
@@ -61,21 +62,21 @@ public class UpdateAppService extends Service {
                 ToastUtil.show(getApplicationContext(), R.string.download_fail);
 
                 //重新下载
-                PendingIntent retryIntent = PendingIntent.getService(getApplicationContext(), 0,
-                        lastIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
-
-                builder
-                        .setSmallIcon(appIcon)
-                        .setContentTitle(apkFile.getName())
-                        .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
-                        .setContentIntent(retryIntent)
-                        .setWhen(System.currentTimeMillis())
-                        .setAutoCancel(true)
-                        .setOngoing(false);
-                Notification notification = builder.build();
-                mNotificationManager.notify(NOTIFY_ID, notification);
+//                PendingIntent retryIntent = PendingIntent.getService(getApplicationContext(), 0,
+//                        lastIntent,
+//                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+//                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+//
+//                builder
+//                        .setSmallIcon(appIcon)
+//                        .setContentTitle(apkFile.getName())
+//                        .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
+//                        .setContentIntent(retryIntent)
+//                        .setWhen(System.currentTimeMillis())
+//                        .setAutoCancel(true)
+//                        .setOngoing(false);
+//                Notification notification = builder.build();
+//                mNotificationManager.notify(NOTIFY_ID, notification);
 
 //                if (null == mNotificationManager) {
 //                    mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -154,7 +155,7 @@ public class UpdateAppService extends Service {
         Bundle bundle = lastIntent.getExtras();
         if (bundle != null) {
             appType = bundle.getString(UpdateAppUtil.ARGS_APP_NAME);
-            appIcon = bundle.getInt(UpdateAppUtil.ARGS_APP_ICON);
+            appIcon = bundle.getParcelable(UpdateAppUtil.ARGS_APP_ICON);
         }
         Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
@@ -179,7 +180,7 @@ public class UpdateAppService extends Service {
         mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, NOTIFY_ID, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mBuilder = new NotificationCompat.Builder(this);
-        mBuilder.setSmallIcon(appIcon)
+        mBuilder.setSmallIcon(getResources().getIdentifier("app_icon", "drawable",getPackageName()))
                 .setContentIntent(mPendingIntent)
                 .setWhen(System.currentTimeMillis())
                 .setDefaults(~Notification.DEFAULT_ALL)
@@ -189,6 +190,7 @@ public class UpdateAppService extends Service {
                 .setProgress(100, 0, false);
         mNotification = mBuilder.build();
         mNotification.flags = Notification.FLAG_ONGOING_EVENT;
+
 
         mNotificationManager.cancel(NOTIFY_ID);
         mNotificationManager.notify(NOTIFY_ID, mNotification);
@@ -201,10 +203,12 @@ public class UpdateAppService extends Service {
 //
 //        mNotification.contentView = new RemoteViews(getApplication().getPackageName(), R.layout.update_app_notification);
 //
-//        //mNotification.icon = R.drawable.;
+//        mNotification.largeIcon = appIcon;
 //        mNotification.when = System.currentTimeMillis();
 //        mNotification.tickerText = getApplicationContext().getString(R.string.download_start);
 //        mNotification.contentIntent = mPendingIntent;
+//
+//        mNotification.contentView.setImageViewBitmap(R.id.app_icon,appIcon);
 //        mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, 0, false);
 //        mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, 0) + "%");
 //        mNotification.contentView.setTextViewText(R.id.app_update_time, DateUtil.getCurrentTimeForNotification());
@@ -324,11 +328,16 @@ public class UpdateAppService extends Service {
         DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, false, new DownloadUtil.DownloadListener() {
             @Override
             public void downloading(int progress) {
-                mBuilder.setProgress(100, progress, false)
-                        .setContentTitle(downloadInfo.getFileName())
-                        .setContentText(String.format(mDownloadProgressStr, progress) + "%");
-                mNotification = mBuilder.build();
+
+                mNotification.contentView.setProgressBar(R.id.app_update_progress, 100, progress, false);
+                mNotification.contentView.setTextViewText(R.id.app_update_progress_text, String.format(mDownloadProgressStr, progress) + "%");
                 mNotificationManager.notify(NOTIFY_ID, mNotification);
+
+//                mBuilder.setProgress(100, progress, false)
+//                        .setContentTitle(downloadInfo.getFileName())
+//                        .setContentText(String.format(mDownloadProgressStr, progress) + "%");
+//                mNotification = mBuilder.build();
+//                mNotificationManager.notify(NOTIFY_ID, mNotification);
             }
 
             @Override
@@ -412,9 +421,9 @@ public class UpdateAppService extends Service {
         long lastTime = apkFile.lastModified();
         long nowTime = new Date().getTime();
 
-        return nowTime - lastTime > 10 * 60 * 1000;
+        //return nowTime - lastTime > 10 * 60 * 1000;
         //for test;
-        //return true;
+        return true;
     }
 
     private void install(File apkFile) {

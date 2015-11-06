@@ -2,6 +2,7 @@ package com.youzan.genesis;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -27,18 +28,18 @@ public class UpdateAppUtil {
 
     private static UpdateAppUtil updateAppUtil;
 
-    private int appIcon;
+    private Bitmap appIcon;
 
-    private UpdateAppUtil(Context context, String defaultAppName, String iconName) {
+    private UpdateAppUtil(Context context, String defaultAppName, Bitmap icon) {
         this.context = context;
         this.defaultAppName = defaultAppName;
-        this.appIcon = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+        this.appIcon = icon;
 
     }
 
-    public static UpdateAppUtil getInstance(Context context, String defaultAppName, String iconName) {
+    public static UpdateAppUtil getInstance(Context context, String defaultAppName, Bitmap icon) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, defaultAppName, iconName);
+            updateAppUtil = new UpdateAppUtil(context, defaultAppName, icon);
         return updateAppUtil;
     }
 
@@ -197,7 +198,7 @@ public class UpdateAppUtil {
         info.setFileSize(fileSize);
         bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
         bundle.putString(ARGS_APP_NAME, defaultAppName);
-        bundle.putInt(ARGS_APP_ICON, appIcon);
+        bundle.putParcelable(ARGS_APP_ICON, appIcon);
         updateIntent.putExtras(bundle);
         context.startService(updateIntent);
     }
