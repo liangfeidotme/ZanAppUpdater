@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.annotation.DrawableRes;
 import android.support.v4.app.NotificationCompat;
 
 import com.youzan.genesis.info.DownloadInfo;
@@ -43,6 +44,7 @@ public class UpdateAppService extends Service {
     private File apkFile = null;
     private DownloadInfo downloadInfo;
     private String appType;
+    @DrawableRes
     private int appIcon;
     //private long lastDownload = 0L;
     private Intent lastIntent;

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.annotation.DrawableRes;
 import android.text.SpannableStringBuilder;
 
 import com.youzan.genesis.info.DownloadInfo;
@@ -25,6 +26,7 @@ public class UpdateAppUtil {
 
     private static UpdateAppUtil updateAppUtil;
 
+    @DrawableRes
     private int appIcon;
 
     private UpdateAppUtil(Context context, String defaultAppName,int appIcon) {
