@@ -181,16 +181,18 @@ public class UpdateAppUtil {
      * 启动后台下载
      */
     private void openUpdateService(final String url, final String fileName, long fileSize) {
-        Intent updateIntent = new Intent(context, UpdateAppService.class);
-        Bundle bundle = new Bundle();
-        DownloadInfo info = new DownloadInfo();
-        info.setDownloadUrl(url);
-        info.setFileName(fileName);
-        info.setFileSize(fileSize);
-        bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-        bundle.putString(ARGS_APP_NAME, defaultAppName);
-        updateIntent.putExtras(bundle);
-        context.startService(updateIntent);
+        if (!UpdateAppService.getDownLoadState()) {
+            Intent updateIntent = new Intent(context, UpdateAppService.class);
+            Bundle bundle = new Bundle();
+            DownloadInfo info = new DownloadInfo();
+            info.setDownloadUrl(url);
+            info.setFileName(fileName);
+            info.setFileSize(fileSize);
+            bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
+            bundle.putString(ARGS_APP_NAME, defaultAppName);
+            updateIntent.putExtras(bundle);
+            context.startService(updateIntent);
+        }
     }
 
     private SpannableStringBuilder buildContentText(VersionInfo versionInfo) {

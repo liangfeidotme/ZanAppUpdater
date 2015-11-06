@@ -86,6 +86,10 @@ public class UpdateAppService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    public static boolean getDownLoadState(){
+        return isDownloading;
+    }
+
     private void initParam(Intent intent) {
         if (intent == null) {
             return;
