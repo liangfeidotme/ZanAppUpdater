@@ -16,6 +16,6 @@
     <string name="downloading">正在下载</string>
     <string name="download_progress" formatted="false">已下载%1$d</string>
     <string name="download_network_tip">当前不是wifi环境，是否继续下载？</string>
-    <string name="please_update_to_newest_version_hard">为了您更好的使用，请更新微商城到最新版本！</string>
+    <string name="please_update_to_newest_version_hard">为了您更好的使用，请更新到最新版本！</string>
     <string name="update_address">"http://kdt-cloud.qiniudn.com/koudaitong.apk"</string><!-- 下载地址 -->
 </resources>

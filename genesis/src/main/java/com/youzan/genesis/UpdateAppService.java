@@ -120,7 +120,7 @@ public class UpdateAppService extends Service {
         mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, NOTIFY_ID, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mBuilder = new NotificationCompat.Builder(this);
-        mBuilder.setSmallIcon(getResources().getIdentifier("app_icon", "drawable", getPackageName()))
+        mBuilder.setSmallIcon(getNotificationIcon(appType))
                 .setContentIntent(mPendingIntent)
                 .setWhen(System.currentTimeMillis())
                 .setDefaults(~Notification.DEFAULT_ALL)
