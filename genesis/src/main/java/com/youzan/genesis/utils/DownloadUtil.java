@@ -50,7 +50,7 @@ public class DownloadUtil {
 
         void downloaded();
 
-        void downError(String error);
+        void downloadError(String error);
     }
 
     public void download(final String urlStr, final File dest, final boolean append, final DownloadListener downloadListener) {
@@ -138,7 +138,7 @@ public class DownloadUtil {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    downloadListener.downError("not downloaded,totalSize < 0");
+                                    downloadListener.downloadError("not downloaded,totalSize < 0");
                                 }
                             });
                         }
@@ -159,7 +159,7 @@ public class DownloadUtil {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                downloadListener.downError(e.getMessage());
+                                downloadListener.downloadError(e.getMessage());
                             }
                         });
 

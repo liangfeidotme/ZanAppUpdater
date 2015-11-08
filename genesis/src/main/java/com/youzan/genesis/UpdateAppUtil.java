@@ -17,23 +17,23 @@ import com.youzan.genesis.utils.StringUtil;
  */
 public class UpdateAppUtil {
 
-    public static final String ARGS_APP_NAME = "app_name";
+    public static final String ARGS_APP_TYPE = "app_name";
     public static final String APP_TYPE_WSC = "有赞微商城";
     public static final String APP_TYPE_WXD = "有赞微小店";
 
     private Context context;
-    private String defaultAppName;
+    private String appType;
 
     private static UpdateAppUtil updateAppUtil;
 
-    private UpdateAppUtil(Context context, String defaultAppName) {
+    private UpdateAppUtil(Context context, String appType) {
         this.context = context;
-        this.defaultAppName = defaultAppName;
+        this.appType = appType;
     }
 
-    public static UpdateAppUtil getInstance(Context context, String defaultAppName) {
+    public static UpdateAppUtil getInstance(Context context, String appType) {
         if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, defaultAppName);
+            updateAppUtil = new UpdateAppUtil(context, appType);
         return updateAppUtil;
     }
 
@@ -132,11 +132,11 @@ public class UpdateAppUtil {
         final long apkSize;
         if (null == versionInfo) {
             upgradeUrl = context.getString(R.string.update_address);
-            apkName = getApkFileName(null);
+            apkName = getApkFileName();
             apkSize = -100;
         } else {
             upgradeUrl = versionInfo.getDownload();
-            apkName = getApkFileName(versionInfo.getVersion());
+            apkName = getApkFileName();
             apkSize = versionInfo.getFile_size();
         }
 
@@ -165,16 +165,8 @@ public class UpdateAppUtil {
         }
     }
 
-    /**
-     * 获取应用文件名(格式如: wsc_v3.0.0.apk)
-     */
-    private String getApkFileName(String versionName) {
-        String appName = defaultAppName;
-
-        if (StringUtil.isEmpty(versionName)) {
-            return appName + ".apk";
-        }
-        return appName + "_v" + versionName + ".apk";
+    private String getApkFileName() {
+        return appType + ".apk";
     }
 
     /**
@@ -189,7 +181,7 @@ public class UpdateAppUtil {
             info.setFileName(fileName);
             info.setFileSize(fileSize);
             bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-            bundle.putString(ARGS_APP_NAME, defaultAppName);
+            bundle.putString(ARGS_APP_TYPE, appType);
             updateIntent.putExtras(bundle);
             context.startService(updateIntent);
         }

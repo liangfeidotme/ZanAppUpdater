@@ -6,9 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -19,11 +16,10 @@ import android.support.v4.app.NotificationCompat;
 import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.utils.DownloadUtil;
 import com.youzan.genesis.utils.FileUtil;
-import com.youzan.genesis.utils.StringUtil;
 import com.youzan.genesis.utils.ToastUtil;
 
 import java.io.File;
-import java.util.Date;
+import java.io.IOException;
 
 /**
  * Created by Francis on 15/10/28.
@@ -65,10 +61,10 @@ public class UpdateAppService extends Service {
         }
         if (FileUtil.isSDCardStateOn()
                 && !FileUtil.isSDCardReadOnly()) {
-            if (checkApkFileExist(downloadInfo.getFilePath())) {
+            if (FileUtil.checkApkFileExist(apkFile)) {
                 // 本地存在有效的apk，直接安装
-                if (checkApkFileValid(apkFile.getPath())) {
-                    install(apkFile);
+                if (FileUtil.checkApkFileValid(this, downloadInfo, apkFile.getPath())) {
+                    FileUtil.install(this, apkFile);
                     stopSelf();
                     return super.onStartCommand(intent, flags, startId);
                 } else {
@@ -80,13 +76,13 @@ public class UpdateAppService extends Service {
             return super.onStartCommand(intent, flags, startId);
         }
 
-        showNotification();
+        showStartNotification();
         startDownload();
 
         return super.onStartCommand(intent, flags, startId);
     }
 
-    public static boolean getDownLoadState(){
+    public static boolean getDownLoadState() {
         return isDownloading;
     }
 
@@ -94,33 +90,54 @@ public class UpdateAppService extends Service {
         if (intent == null) {
             return;
         }
-        mDownloadProgressStr = getApplicationContext().getString(R.string.download_progress);
+        mDownloadProgressStr = getString(R.string.download_progress);
         lastIntent = intent;
 
         Bundle bundle = lastIntent.getExtras();
         if (bundle != null) {
-            appType = bundle.getString(UpdateAppUtil.ARGS_APP_NAME);
+            appType = bundle.getString(UpdateAppUtil.ARGS_APP_TYPE);
         }
         Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
             downloadInfo = (DownloadInfo) parcelable;
-            downloadInfo.setFilePath(getApkFilePath(downloadInfo.getFileName()));
+            downloadInfo.setFilePath(FileUtil.getDownloadApkFilePath(downloadInfo.getFileName()));
+            apkFile = new File(downloadInfo.getFilePath());
+            FileUtil.checkToCreateApkFile(apkFile);
         } else {
             stopSelf();
         }
     }
 
-    /**
-     *  显示通知
-     */
-    private void showNotification() {
+    private void showErrorNotification(){
         if (null == mNotificationManager) {
-            mNotificationManager = (NotificationManager) getApplication().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+
+        PendingIntent retryIntent = PendingIntent.getService(this, 0,
+                lastIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        builder.setSmallIcon(getNotificationIcon(appType))
+                .setContentTitle(apkFile.getName())
+                .setContentText(getString(R.string.download_fail_retry))
+                .setContentIntent(retryIntent)
+                .setWhen(System.currentTimeMillis())
+                .setAutoCancel(true)
+                .setOngoing(false);
+        Notification notification = builder.build();
+        mNotificationManager.cancel(NOTIFY_ID);
+        mNotificationManager.notify(NOTIFY_ID, notification);
+    }
+
+    private void showStartNotification() {
+        if (null == mNotificationManager) {
+            mNotificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         }
 
         Intent completingIntent = new Intent();
         completingIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        completingIntent.setClass(getApplication().getApplicationContext(), UpdateAppService.class);
+        completingIntent.setClass(this, UpdateAppService.class);
         mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, NOTIFY_ID, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mBuilder = new NotificationCompat.Builder(this);
@@ -143,7 +160,7 @@ public class UpdateAppService extends Service {
 
     private int getNotificationIcon(String appType) {
         boolean whiteIcon = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-        if (whiteIcon){
+        if (whiteIcon) {
             return appType.equals(UpdateAppUtil.APP_TYPE_WXD) ? R.drawable.wxd_icon_trans : R.drawable.wsc_icon_trans;
         }
         return appType.equals(UpdateAppUtil.APP_TYPE_WXD) ? R.drawable.wxd_icon : R.drawable.wsc_icon;
@@ -152,29 +169,14 @@ public class UpdateAppService extends Service {
     private void handleMessage(Message msg) {
         switch (msg.what) {
             case DOWNLOAD_SUCCESS:
-                ToastUtil.show(getApplicationContext(), R.string.download_success);
-                install(apkFile);
+                ToastUtil.show(this, R.string.download_success);
+                FileUtil.install(this, apkFile);
                 mNotificationManager.cancel(NOTIFY_ID);
                 break;
             case DOWNLOAD_FAIL:
-                ToastUtil.show(getApplicationContext(), R.string.download_fail);
-
+                ToastUtil.show(this, R.string.download_fail);
                 //重新下载
-                PendingIntent retryIntent = PendingIntent.getService(getApplicationContext(), 0,
-                        lastIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
-
-                builder.setSmallIcon(getNotificationIcon(appType))
-                        .setContentTitle(apkFile.getName())
-                        .setContentText(getApplicationContext().getString(R.string.download_fail_retry))
-                        .setContentIntent(retryIntent)
-                        .setWhen(System.currentTimeMillis())
-                        .setAutoCancel(true)
-                        .setOngoing(false);
-                Notification notification = builder.build();
-                mNotificationManager.notify(NOTIFY_ID, notification);
-
+                showErrorNotification();
                 break;
             default:
                 break;
@@ -197,8 +199,14 @@ public class UpdateAppService extends Service {
             public void downloaded() {
                 isDownloading = false;
 
+                mBuilder.setProgress(100, 100, false)
+                        .setContentTitle(downloadInfo.getFileName())
+                        .setContentText(getString(R.string.download_done));
+                mNotification = mBuilder.build();
+                mNotificationManager.notify(NOTIFY_ID, mNotification);
+
                 if (apkFile.exists() && apkFile.isFile()
-                        && checkApkFileValid(apkFile.getPath())) {
+                        && FileUtil.checkApkFileValid(UpdateAppService.this, downloadInfo, apkFile.getPath())) {
                     Message msg = Message.obtain();
                     msg.what = DOWNLOAD_SUCCESS;
                     handleMessage(msg);
@@ -212,7 +220,7 @@ public class UpdateAppService extends Service {
             }
 
             @Override
-            public void downError(String error) {
+            public void downloadError(String error) {
                 isDownloading = false;
 
                 Message msg = Message.obtain();
@@ -222,67 +230,5 @@ public class UpdateAppService extends Service {
                 stopSelf();
             }
         });
-    }
-
-    /**
-     * 检查新版本的文件是否已经下载
-     */
-    private boolean checkApkFileExist(String apkPath) {
-        if (StringUtil.isEmpty(apkPath)) {
-            return false;
-        }
-        apkFile = new File(apkPath);
-        return apkFile.exists() && apkFile.isFile();
-    }
-
-    /**
-     * 获取apk更新文件路径
-     */
-    public String getApkFilePath(String apkName) {
-        return FileUtil.getDownloadAppFilePath(apkName);
-    }
-
-    private boolean checkApkFileValid(String apkPath) {
-        boolean valid;
-
-        // 创建时间大于10min，不再有效
-        if (checkApkFileCreatedTime()) {
-            valid = false;
-        } else {
-            try {
-                PackageManager pManager = getPackageManager();
-                PackageInfo pInfo = pManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES);
-                if (pInfo == null) {
-                    valid = false;
-                } else {
-                    valid = true;
-                }
-            } catch (Exception e) {
-                valid = false;
-                e.printStackTrace();
-            }
-        }
-
-        return valid;
-    }
-
-    private boolean checkApkFileCreatedTime() {
-        if (downloadInfo == null) {
-            return true;
-        }
-        apkFile = new File(downloadInfo.getFilePath());
-        long lastTime = apkFile.lastModified();
-        long nowTime = new Date().getTime();
-        return nowTime - lastTime > 10 * 60 * 1000;
-        //for test;
-        //return true;
-    }
-
-    private void install(File apkFile) {
-        Uri uri = Uri.fromFile(apkFile);
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.setDataAndType(uri, "application/vnd.android.package-archive");
-        startActivity(intent);
     }
 }
