@@ -6,7 +6,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
-import android.provider.ContactsContract;
 
 import com.youzan.genesis.info.DownloadInfo;
 

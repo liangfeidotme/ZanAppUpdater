@@ -17,10 +17,6 @@ import com.youzan.genesis.utils.StringUtil;
  */
 public class UpdateAppUtil {
 
-    public static final String ARGS_APP_TYPE = "app_name";
-    public static final String APP_TYPE_WSC = "有赞微商城";
-    public static final String APP_TYPE_WXD = "有赞微小店";
-
     private Context context;
     private String appType;
 
@@ -181,7 +177,6 @@ public class UpdateAppUtil {
             info.setFileName(fileName);
             info.setFileSize(fileSize);
             bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-            bundle.putString(ARGS_APP_TYPE, appType);
             updateIntent.putExtras(bundle);
             context.startService(updateIntent);
         }
