@@ -1,12 +1,7 @@
 package com.youzan.genesis.genesisupdater;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
@@ -41,11 +36,6 @@ public class MainActivity extends AppCompatActivity {
     //private static String CHECK_URL = "http://open.koudaitong.com/api/entry?sign=a4dfd87aba2d950fa74e1182fbac653c&sign_method=md5&timestamp=2015-11-04+11:52:20&v=1.0&method=wsc.version.valid&app_id=a424d52df7f0723d6a33&format=json&type=android&version=3.1.1";
     private static final String PREF_VERSION_CHECK_TIME = "PREF_VERSION_CHECK_TIME";
     private static final long VERSION_CHECK_INTERVAL = 2 * 24 * 60 * 60 * 1000;
-    private static final int NOTIFY_ID = 0xA1;
-
-    private NotificationManager mNotificationManager = null;
-    private Notification mNotification = null;
-    private NotificationCompat.Builder mBuilder = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -102,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
 
-                                UpdateAppService.setShowNotification(showNotification);
+                                UpdateAppService.setShowNotification(UpdateNotificationUtil.getInstance(MainActivity.this).getShowNotification());
 
                                 UpdateAppUtil.getInstance(MainActivity.this, "有赞微商城").showDialog(versionInfo);
 
@@ -114,66 +104,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
-    private UpdateAppService.ShowNotification showNotification = new UpdateAppService.ShowNotification() {
-        @Override
-        public void showStartNotification(PendingIntent pendingIntent,String title) {
-
-            if (null == mNotificationManager) {
-                mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            }
-
-            if (mBuilder == null) {
-                mBuilder = new NotificationCompat.Builder(MainActivity.this);
-
-                mBuilder.setSmallIcon(R.drawable.app_icon)
-                        .setContentIntent(pendingIntent)
-                        .setWhen(System.currentTimeMillis())
-                        .setDefaults(~Notification.DEFAULT_ALL)
-                        .setAutoCancel(false)
-                        .setOngoing(true)
-                        .setContentTitle(title)
-                        .setProgress(100, 0, false);
-            }
-
-            mNotification = mBuilder.build();
-            mNotification.flags = Notification.FLAG_ONGOING_EVENT;
-
-            mNotificationManager.cancel(NOTIFY_ID);
-            mNotificationManager.notify(NOTIFY_ID, mNotification);
-        }
-
-        @Override
-        public void showUpdateNotification(int progress, String title, String context) {
-            mBuilder.setProgress(100, progress, false)
-                    .setContentTitle(title)
-                    .setContentText(context);
-            mNotification = mBuilder.build();
-            mNotificationManager.notify(NOTIFY_ID, mNotification);
-        }
-
-        @Override
-        public void showSuccessNotification() {
-            mNotificationManager.cancel(NOTIFY_ID);
-        }
-
-        @Override
-        public void showFailNotification(PendingIntent pendingIntent,String title,String context) {
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this);
-
-            builder.setSmallIcon(R.drawable.app_icon)
-                    .setContentTitle(title)
-                    .setContentText(context)
-                    .setContentIntent(pendingIntent)
-                    .setWhen(System.currentTimeMillis())
-                    .setAutoCancel(true)
-                    .setOngoing(false);
-            Notification notification = builder.build();
-            mNotificationManager.cancel(NOTIFY_ID);
-            mNotificationManager.notify(NOTIFY_ID, notification);
-
-        }
-    };
 
 }

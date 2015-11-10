@@ -154,6 +154,7 @@ public class UpdateAppService extends Service {
     }
 
     private void startDownload() {
+        isDownloading = true;
         DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, false, new DownloadUtil.DownloadListener() {
             @Override
             public void downloading(int progress) {
