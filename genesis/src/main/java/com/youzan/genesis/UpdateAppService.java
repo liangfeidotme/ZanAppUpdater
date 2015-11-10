@@ -13,6 +13,7 @@ import com.youzan.genesis.utils.FileUtil;
 import com.youzan.genesis.utils.ToastUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by Francis on 15/10/28.
@@ -20,6 +21,7 @@ import java.io.File;
 public class UpdateAppService extends Service {
 
     public static final String ARG_DOWNLOAD_INFO = "DOWNLOAD_INFO";
+    public static final String ARG_DOWNLOAD_FAIL_RETRY = "DOWNLOAD_FAIL_RETRY";
     private static boolean isDownloading = false;
     private static final int DOWNLOAD_FAIL = -1;
     private static final int DOWNLOAD_SUCCESS = 0;
@@ -30,18 +32,18 @@ public class UpdateAppService extends Service {
     private DownloadInfo downloadInfo;
     //private long lastDownload = 0L;
     private Intent lastIntent;
-
+    private boolean isRetry;
 
     private static ShowNotification showNotificationLisenter;
 
     public interface ShowNotification {
-        void showStartNotification(PendingIntent pendingIntent,String title);
+        void showStartNotification(PendingIntent pendingIntent, String title);
 
         void showUpdateNotification(int progress, String title, String context);
 
         void showSuccessNotification();
 
-        void showFailNotification(PendingIntent pendingIntent,String title,String context);
+        void showFailNotification(PendingIntent pendingIntent, String title, String context);
     }
 
     public static void setShowNotification(ShowNotification showNotification) {
@@ -72,8 +74,10 @@ public class UpdateAppService extends Service {
                     stopSelf();
                     return super.onStartCommand(intent, flags, startId);
                 } else {
-                    // 删除无效的apk
-                    FileUtil.deleteFile(apkFile.getPath());
+                    if (!isRetry) {
+                        // 不是断点续传的情况下 删除无效的apk
+                        FileUtil.deleteFile(apkFile.getPath());
+                    }
                 }
             }
         } else {
@@ -96,6 +100,7 @@ public class UpdateAppService extends Service {
         }
         mDownloadProgressStr = getString(R.string.download_progress);
         lastIntent = intent;
+        isRetry = lastIntent.getBooleanExtra(ARG_DOWNLOAD_FAIL_RETRY, false);
 
         Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
@@ -126,6 +131,7 @@ public class UpdateAppService extends Service {
 
     private void showFailNotification(Intent lastIntent) {
         if (showNotificationLisenter != null) {
+            lastIntent.putExtra(ARG_DOWNLOAD_FAIL_RETRY, true);
             PendingIntent retryIntent = PendingIntent.getService(this, 0,
                     lastIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
@@ -139,7 +145,7 @@ public class UpdateAppService extends Service {
                 ToastUtil.show(this, R.string.download_success);
                 FileUtil.install(this, apkFile);
 
-                if (showNotificationLisenter != null){
+                if (showNotificationLisenter != null) {
                     showNotificationLisenter.showSuccessNotification();
                 }
                 break;
@@ -155,7 +161,7 @@ public class UpdateAppService extends Service {
 
     private void startDownload() {
         isDownloading = true;
-        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, false, new DownloadUtil.DownloadListener() {
+        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, true, new DownloadUtil.DownloadListener() {
             @Override
             public void downloading(int progress) {
                 showUpdateNotification(progress);

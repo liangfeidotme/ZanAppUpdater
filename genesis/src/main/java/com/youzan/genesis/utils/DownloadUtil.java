@@ -61,7 +61,7 @@ public class DownloadUtil {
                 int downloadProgress = 0;
                 long remoteSize = 0;
                 int currentSize = 0;
-                long totalSize = -1;
+                long totalSize = 0;
                 long lastDownload = 0L;
 
                 if (!append && dest.exists() && dest.isFile()) {
@@ -72,6 +72,7 @@ public class DownloadUtil {
                     if (append && dest.exists() && dest.isFile()) {
                         FileInputStream fis = new FileInputStream(dest);
                         currentSize = fis.available();
+                        totalSize = currentSize;
                         if (fis != null) {
                             fis.close();
                         }
@@ -91,9 +92,10 @@ public class DownloadUtil {
                     InputStream is = null;
                     FileOutputStream os = null;
                     HttpResponse response = httpClient.execute(request);
-                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK || response.getStatusLine().getStatusCode() == HttpStatus.SC_PARTIAL_CONTENT) {
                         is = response.getEntity().getContent();
-                        remoteSize = response.getEntity().getContentLength();
+                        // 如果返回206 则是相差的大小,所以加上之前已下载的
+                        remoteSize = response.getEntity().getContentLength() + totalSize;
                         Header contentEncoding = response.getFirstHeader("Content-Encoding");
                         if (contentEncoding != null && contentEncoding.getValue().equalsIgnoreCase("gzip")) {
                             is = new GZIPInputStream(is);
@@ -121,9 +123,6 @@ public class DownloadUtil {
                                 }
                             }
                         }
-                        if (totalSize < 0) {
-                            totalSize = 0;
-                        }
 
                         if (os != null) {
                             os.close();
@@ -133,12 +132,12 @@ public class DownloadUtil {
                         }
                     }
 
-                    if (totalSize < 0) {
+                    if (totalSize <= 0) {
                         if (downloadListener != null) {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    downloadListener.downloadError("not downloaded,totalSize < 0");
+                                    downloadListener.downloadError("not downloaded,totalSize <＝ 0");
                                 }
                             });
                         }

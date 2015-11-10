@@ -10,6 +10,7 @@ import android.os.Environment;
 import com.youzan.genesis.info.DownloadInfo;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 
 /**
@@ -100,6 +101,11 @@ public class FileUtil {
         }
         File parent = file.getParentFile();
         parent.mkdirs();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
