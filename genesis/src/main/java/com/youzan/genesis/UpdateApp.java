@@ -165,16 +165,14 @@ public class UpdateApp {
      */
     private void openUpdateService(final String url, final String fileName) {
 
-        if (!UpdateAppService.getDownLoadState()) {
-            Intent updateIntent = new Intent(context, UpdateAppService.class);
-            Bundle bundle = new Bundle();
-            DownloadInfo info = new DownloadInfo();
-            info.setDownloadUrl(url);
-            info.setFileName(fileName);
-            bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-            updateIntent.putExtras(bundle);
-            context.startService(updateIntent);
-        }
+        Intent updateIntent = new Intent(context, UpdateAppService.class);
+        Bundle bundle = new Bundle();
+        DownloadInfo info = new DownloadInfo();
+        info.setDownloadUrl(url);
+        info.setFileName(fileName);
+        bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
+        updateIntent.putExtras(bundle);
+        context.startService(updateIntent);
     }
 
     private SpannableStringBuilder buildContentText(VersionInfo versionInfo) {

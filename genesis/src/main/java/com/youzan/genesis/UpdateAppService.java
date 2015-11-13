@@ -122,6 +122,7 @@ public class UpdateAppService extends Service {
         isDownloading = true;
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadInfo.getDownloadUrl()));
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         request.setDestinationInExternalFilesDir(this, "download_app", downloadInfo.getFileName());
         request.setTitle(downloadInfo.getFileName());
 
