@@ -15,22 +15,26 @@ import com.youzan.genesis.utils.StringUtil;
 /**
  * Created by Francis on 15/10/28.
  */
-public class UpdateAppUtil {
+public class UpdateApp {
+
+    private static UpdateApp updateApp;
 
     private Context context;
     private String appType;
 
-    private static UpdateAppUtil updateAppUtil;
-
-    private UpdateAppUtil(Context context, String appType) {
+    private UpdateApp(Context context, String appType) {
         this.context = context;
         this.appType = appType;
     }
 
-    public static UpdateAppUtil getInstance(Context context, String appType) {
-        if (updateAppUtil == null)
-            updateAppUtil = new UpdateAppUtil(context, appType);
-        return updateAppUtil;
+    public static UpdateApp getInstance(Context context, String appType) {
+        if (updateApp == null)
+            synchronized (UpdateApp.class) {
+                if (updateApp == null) {
+                    updateApp = new UpdateApp(context, appType);
+                }
+            }
+        return updateApp;
     }
 
     /**
@@ -123,21 +127,17 @@ public class UpdateAppUtil {
      */
     public void readyTodownloadFile(final VersionInfo versionInfo) {
 
+        final String apkName = appType + ".apk";
         final String upgradeUrl;
-        final String apkName;
-        final long apkSize;
+
         if (null == versionInfo) {
             upgradeUrl = context.getString(R.string.update_address);
-            apkName = getApkFileName();
-            apkSize = -100;
+
         } else {
             upgradeUrl = versionInfo.getDownload();
-            apkName = getApkFileName();
-            apkSize = versionInfo.getFile_size();
         }
 
         ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
         //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
         NetworkInfo mobileNetworkInfo = conMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         NetworkInfo.State mobile = null;
@@ -145,7 +145,6 @@ public class UpdateAppUtil {
             mobile = mobileNetworkInfo.getState();//mobile 3G Data Network
         }
         NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();//wifi
-
         //只连了3G
         if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
                 && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi) {
@@ -153,29 +152,25 @@ public class UpdateAppUtil {
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
-                            openUpdateService(upgradeUrl, apkName, apkSize);
+                            openUpdateService(upgradeUrl, apkName);
                         }
                     }, false);
         } else {
-            openUpdateService(upgradeUrl, apkName, apkSize);
+            openUpdateService(upgradeUrl, apkName);
         }
-    }
-
-    private String getApkFileName() {
-        return appType + ".apk";
     }
 
     /**
      * 启动后台下载
      */
-    private void openUpdateService(final String url, final String fileName, long fileSize) {
+    private void openUpdateService(final String url, final String fileName) {
+
         if (!UpdateAppService.getDownLoadState()) {
             Intent updateIntent = new Intent(context, UpdateAppService.class);
             Bundle bundle = new Bundle();
             DownloadInfo info = new DownloadInfo();
             info.setDownloadUrl(url);
             info.setFileName(fileName);
-            info.setFileSize(fileSize);
             bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
             updateIntent.putExtras(bundle);
             context.startService(updateIntent);

@@ -1,19 +1,19 @@
 package com.youzan.genesis;
 
-import android.app.PendingIntent;
+import android.app.DownloadManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.Parcelable;
 
 import com.youzan.genesis.info.DownloadInfo;
-import com.youzan.genesis.utils.DownloadUtil;
 import com.youzan.genesis.utils.FileUtil;
-import com.youzan.genesis.utils.ToastUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by Francis on 15/10/28.
@@ -21,33 +21,46 @@ import java.io.IOException;
 public class UpdateAppService extends Service {
 
     public static final String ARG_DOWNLOAD_INFO = "DOWNLOAD_INFO";
-    public static final String ARG_DOWNLOAD_FAIL_RETRY = "DOWNLOAD_FAIL_RETRY";
     private static boolean isDownloading = false;
-    private static final int DOWNLOAD_FAIL = -1;
-    private static final int DOWNLOAD_SUCCESS = 0;
-    private static final int REQUEST_CODE = 0x11;
-
-    private String mDownloadProgressStr = null;
     private File apkFile = null;
     private DownloadInfo downloadInfo;
-    //private long lastDownload = 0L;
-    private Intent lastIntent;
-    private boolean isRetry;
 
-    private static ShowNotification showNotificationLisenter;
+    private CompleteReceiver completeReceiver;
+    private long downloadId = 0;
+    private DownloadManager downloadManager;
 
-    public interface ShowNotification {
-        void showStartNotification(PendingIntent pendingIntent, String title);
+    class CompleteReceiver extends BroadcastReceiver {
 
-        void showUpdateNotification(int progress, String title, String context);
-
-        void showSuccessNotification();
-
-        void showFailNotification(PendingIntent pendingIntent, String title, String context);
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)) {
+                isDownloading = false;
+                long completeDownloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                if (completeDownloadId == downloadId) {
+                    Uri uri = downloadManager.getUriForDownloadedFile(downloadId);
+                    Intent installIntent = new Intent(Intent.ACTION_VIEW);
+                    installIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    installIntent.setDataAndType(uri, "application/vnd.android.package-archive");
+                    context.startActivity(installIntent);
+                }
+            }
+        }
     }
 
-    public static void setShowNotification(ShowNotification showNotification) {
-        showNotificationLisenter = showNotification;
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        completeReceiver = new CompleteReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        registerReceiver(completeReceiver, filter);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(completeReceiver);
     }
 
     @Override
@@ -69,22 +82,19 @@ public class UpdateAppService extends Service {
                 && !FileUtil.isSDCardReadOnly()) {
             if (FileUtil.checkApkFileExist(apkFile)) {
                 // 本地存在有效的apk，直接安装
-                if (FileUtil.checkApkFileValid(this, downloadInfo, apkFile.getPath())) {
+                if (FileUtil.checkApkFileValid(this, apkFile)) {
                     FileUtil.install(this, apkFile);
                     stopSelf();
                     return super.onStartCommand(intent, flags, startId);
                 } else {
-                    if (!isRetry) {
-                        // 不是断点续传的情况下 删除无效的apk
-                        FileUtil.deleteFile(apkFile.getPath());
-                    }
+                    // 删除无效的apk
+                    FileUtil.deleteFile(apkFile.getPath());
                 }
             }
         } else {
             return super.onStartCommand(intent, flags, startId);
         }
 
-        showStartNotification();
         startDownload();
 
         return super.onStartCommand(intent, flags, startId);
@@ -98,105 +108,24 @@ public class UpdateAppService extends Service {
         if (intent == null) {
             return;
         }
-        mDownloadProgressStr = getString(R.string.download_progress);
-        lastIntent = intent;
-        isRetry = lastIntent.getBooleanExtra(ARG_DOWNLOAD_FAIL_RETRY, false);
 
-        Parcelable parcelable = lastIntent.getParcelableExtra(ARG_DOWNLOAD_INFO);
+        Parcelable parcelable = intent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
             downloadInfo = (DownloadInfo) parcelable;
-            downloadInfo.setFilePath(FileUtil.getDownloadApkFilePath(downloadInfo.getFileName()));
-            apkFile = new File(downloadInfo.getFilePath());
-            FileUtil.checkToCreateApkFile(apkFile);
+            apkFile = new File(getExternalFilesDir("download_app") + "/" + downloadInfo.getFileName());
         } else {
             stopSelf();
         }
     }
 
-    private void showStartNotification() {
-        if (showNotificationLisenter != null) {
-            Intent completingIntent = new Intent();
-            completingIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            completingIntent.setClass(this, UpdateAppService.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, REQUEST_CODE, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-            showNotificationLisenter.showStartNotification(pendingIntent, getString(R.string.download_start));
-        }
-    }
-
-    private void showUpdateNotification(int progress) {
-        if (showNotificationLisenter != null) {
-            showNotificationLisenter.showUpdateNotification(progress, downloadInfo.getFileName(), String.format(mDownloadProgressStr, progress) + "%");
-        }
-    }
-
-    private void showFailNotification(Intent lastIntent) {
-        if (showNotificationLisenter != null) {
-            lastIntent.putExtra(ARG_DOWNLOAD_FAIL_RETRY, true);
-            PendingIntent retryIntent = PendingIntent.getService(this, 0,
-                    lastIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
-            showNotificationLisenter.showFailNotification(retryIntent, downloadInfo.getFileName(), getString(R.string.download_fail_retry));
-        }
-    }
-
-    private void handleMessage(Message msg) {
-        switch (msg.what) {
-            case DOWNLOAD_SUCCESS:
-                ToastUtil.show(this, R.string.download_success);
-                FileUtil.install(this, apkFile);
-
-                if (showNotificationLisenter != null) {
-                    showNotificationLisenter.showSuccessNotification();
-                }
-                break;
-            case DOWNLOAD_FAIL:
-                ToastUtil.show(this, R.string.download_fail);
-                //重新下载
-                showFailNotification(lastIntent);
-                break;
-            default:
-                break;
-        }
-    }
-
     private void startDownload() {
         isDownloading = true;
-        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, true, new DownloadUtil.DownloadListener() {
-            @Override
-            public void downloading(int progress) {
-                showUpdateNotification(progress);
-            }
 
-            @Override
-            public void downloaded() {
-                isDownloading = false;
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadInfo.getDownloadUrl()));
+        request.setDestinationInExternalFilesDir(this, "download_app", downloadInfo.getFileName());
+        request.setTitle(downloadInfo.getFileName());
 
-                showUpdateNotification(100);
-
-                if (apkFile.exists() && apkFile.isFile()
-                        && FileUtil.checkApkFileValid(UpdateAppService.this, downloadInfo, apkFile.getPath())) {
-                    Message msg = Message.obtain();
-                    msg.what = DOWNLOAD_SUCCESS;
-                    handleMessage(msg);
-                } else {
-                    Message msg = Message.obtain();
-                    msg.what = DOWNLOAD_FAIL;
-                    handleMessage(msg);
-                }
-
-                stopSelf();
-            }
-
-            @Override
-            public void downloadError(String error) {
-                isDownloading = false;
-
-                Message msg = Message.obtain();
-                msg.what = DOWNLOAD_FAIL;
-                handleMessage(msg);
-
-                stopSelf();
-            }
-        });
+        downloadManager = ((DownloadManager) getSystemService(DOWNLOAD_SERVICE));
+        downloadId = downloadManager.enqueue(request);
     }
 }

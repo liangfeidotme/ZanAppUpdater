@@ -14,8 +14,7 @@ import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.youzan.genesis.UpdateAppService;
-import com.youzan.genesis.UpdateAppUtil;
+import com.youzan.genesis.UpdateApp;
 import com.youzan.genesis.info.VersionInfo;
 
 import java.io.IOException;
@@ -92,9 +91,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
 
-                                UpdateAppService.setShowNotification(UpdateNotificationUtil.getInstance(MainActivity.this).getShowNotification());
-
-                                UpdateAppUtil.getInstance(MainActivity.this, "有赞微商城").showDialog(versionInfo);
+                                UpdateApp.getInstance(MainActivity.this, "有赞微商城").showDialog(versionInfo);
 
                                 MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                             }
@@ -102,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
+
         });
     }
 

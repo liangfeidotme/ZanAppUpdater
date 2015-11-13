@@ -17,21 +17,13 @@ public class DownloadInfo implements Parcelable {
         }
     };
     /**
-     * 文件名(全称, 比如:wsc_v3.0.0.apk)
+     * 文件名
      */
     private String fileName;
     /**
      * 下载链接
      */
     private String downloadUrl;
-    /**
-     * 文件保存路径
-     */
-    private String filePath;
-    /**
-     * 文件大小
-     */
-    private long fileSize;
 
     public DownloadInfo() {
     }
@@ -39,8 +31,6 @@ public class DownloadInfo implements Parcelable {
     protected DownloadInfo(Parcel in) {
         this.fileName = in.readString();
         this.downloadUrl = in.readString();
-        this.filePath = in.readString();
-        this.fileSize = in.readLong();
     }
 
     public String getDownloadUrl() {
@@ -59,22 +49,6 @@ public class DownloadInfo implements Parcelable {
         this.fileName = fileName;
     }
 
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(long fileSize) {
-        this.fileSize = fileSize;
-    }
-
     @Override
     public int describeContents() {
         return 0;
@@ -84,7 +58,5 @@ public class DownloadInfo implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.fileName);
         dest.writeString(this.downloadUrl);
-        dest.writeString(this.filePath);
-        dest.writeLong(this.fileSize);
     }
 }
