@@ -43,6 +43,7 @@ public class UpdateAppService extends Service {
                     installIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     installIntent.setDataAndType(uri, "application/vnd.android.package-archive");
                     context.startActivity(installIntent);
+                    stopSelf();
                 }
             }
         }
@@ -100,10 +101,6 @@ public class UpdateAppService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    public static boolean getDownLoadState() {
-        return isDownloading;
-    }
-
     private void initParam(Intent intent) {
         if (intent == null) {
             return;
@@ -122,7 +119,6 @@ public class UpdateAppService extends Service {
         isDownloading = true;
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadInfo.getDownloadUrl()));
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         request.setDestinationInExternalFilesDir(this, "download_app", downloadInfo.getFileName());
         request.setTitle(downloadInfo.getFileName());
 
