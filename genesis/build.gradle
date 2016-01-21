@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "23.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 22
+        targetSdkVersion 23
         versionCode 20
         versionName "0.2.0"
     }
@@ -22,9 +22,17 @@ apply plugin: 'maven'
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: '../../maven_local_repo/')
-            pom.version = '0.2.0-snapshot'
-            pom.groupId = 'com.youzan.genesis'
+            snapshotRepository(url: 'http://maven.qima-inc.com/content/repositories/snapshots/') {
+                authentication(userName: 'snapshots', password: 'snapshots')
+            }
+
+            repository(url: 'http://maven.qima-inc.com/content/repositories/releases/') {
+                authentication(userName: 'username', password: 'password')
+            }
+
+            pom.packaging = 'aar'
+            pom.version = '0.2.0-SNAPSHOT' // SNAPSHOT 一定要大写！
+            pom.groupId = 'com.youzan.mobile' // Attention!
             pom.artifactId = "genesis"
         }
     }
@@ -32,5 +40,5 @@ uploadArchives {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.2.1'
+    compile 'com.android.support:appcompat-v7:23.+'
 }
