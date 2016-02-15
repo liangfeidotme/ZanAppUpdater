@@ -24,6 +24,7 @@ import java.io.File;
 public class UpdateAppService extends Service {
 
     public static final String ARG_DOWNLOAD_INFO = "DOWNLOAD_INFO";
+    public static final String ARG_DOWNLOAD_FAIL_RETRY = "DOWNLOAD_FAIL_RETRY";
     private static boolean isDownloading = false;
     private File apkFile = null;
     private DownloadInfo downloadInfo;
@@ -35,6 +36,7 @@ public class UpdateAppService extends Service {
     private String mDownloadProgressStr = null;
     private Notification mNotification = null;
     private NotificationCompat.Builder mBuilder = null;
+    private boolean isRetry;
     private Intent lastIntent;
 
     @Override
@@ -61,8 +63,10 @@ public class UpdateAppService extends Service {
                     stopSelf();
                     return super.onStartCommand(intent, flags, startId);
                 } else {
-                    // 删除无效的apk
-                    FileUtil.deleteFile(apkFile.getPath());
+                    if (!isRetry) {
+                        // 不是断点续传的情况下 删除无效的apk
+                        FileUtil.deleteFile(apkFile.getPath());
+                    }
                 }
             }
         } else {
@@ -81,6 +85,7 @@ public class UpdateAppService extends Service {
         }
         mDownloadProgressStr = getString(R.string.download_progress);
         lastIntent = intent;
+        isRetry = lastIntent.getBooleanExtra(ARG_DOWNLOAD_FAIL_RETRY, false);
 
         Parcelable parcelable = intent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
@@ -133,6 +138,7 @@ public class UpdateAppService extends Service {
             mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         }
 
+        lastIntent.putExtra(ARG_DOWNLOAD_FAIL_RETRY, true);
         PendingIntent retryIntent = PendingIntent.getService(this, 0,
                 lastIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
