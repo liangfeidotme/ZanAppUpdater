@@ -1,6 +1,7 @@
 package com.youzan.genesis;
 
 import android.app.DownloadManager;
+import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,10 +9,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.Parcelable;
 
 import com.youzan.genesis.info.DownloadInfo;
+import com.youzan.genesis.utils.DownloadUtil;
 import com.youzan.genesis.utils.FileUtil;
+import com.youzan.genesis.utils.ToastUtil;
 
 import java.io.File;
 
@@ -24,7 +28,8 @@ public class UpdateAppService extends Service {
     private static boolean isDownloading = false;
     private File apkFile = null;
     private DownloadInfo downloadInfo;
-
+    private static final int DOWNLOAD_FAIL = -1;
+    private static final int DOWNLOAD_SUCCESS = 0;
     private CompleteReceiver completeReceiver;
     private long downloadId = 0;
     private DownloadManager downloadManager;
@@ -119,13 +124,71 @@ public class UpdateAppService extends Service {
     }
 
     private void startDownload() {
+
         isDownloading = true;
+        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, true, new DownloadUtil.DownloadListener() {
+            @Override
+            public void downloading(int progress) {
+               showUpdateNotification(progress);
+            }
 
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadInfo.getDownloadUrl()));
-        request.setDestinationInExternalFilesDir(this, "download_app", downloadInfo.getFileName());
-        request.setTitle(downloadInfo.getFileName());
+            @Override
+            public void downloaded() {
+                isDownloading = false;
 
-        downloadManager = ((DownloadManager) getSystemService(DOWNLOAD_SERVICE));
-        downloadId = downloadManager.enqueue(request);
+                showUpdateNotification(100);
+
+                if (apkFile.exists() && apkFile.isFile()
+                        && FileUtil.checkApkFileValid(UpdateAppService.this, apkFile)) {
+                    Message msg = Message.obtain();
+                    msg.what = DOWNLOAD_SUCCESS;
+                    handleMessage(msg);
+                } else {
+                    Message msg = Message.obtain();
+                    msg.what = DOWNLOAD_FAIL;
+                    handleMessage(msg);
+                }
+
+                stopSelf();
+            }
+
+            @Override
+            public void downloadError(String error) {
+                isDownloading = false;
+
+                Message msg = Message.obtain();
+                msg.what = DOWNLOAD_FAIL;
+                handleMessage(msg);
+
+                stopSelf();
+            }
+        });
+
+
     }
+
+    
+    private void showUpdateNotification(int progress) {
+    }
+
+    private void handleMessage(Message msg) {
+        switch (msg.what) {
+            case DOWNLOAD_SUCCESS:
+                ToastUtil.show(this, R.string.download_success);
+                FileUtil.install(this, apkFile);
+
+//                if (showNotificationLisenter != null) {
+//                    showNotificationLisenter.showSuccessNotification();
+//                }
+                break;
+            case DOWNLOAD_FAIL:
+                ToastUtil.show(this, R.string.download_fail);
+                //重新下载
+                //showFailNotification(lastIntent);
+                break;
+            default:
+                break;
+        }
+    }
+
 }
