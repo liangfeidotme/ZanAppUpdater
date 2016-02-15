@@ -89,7 +89,11 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            UpdateApp.getInstance(MainActivity.this, "有赞微商城").showDialog(versionInfo);
+                            new UpdateApp.Builder(MainActivity.this, "有赞微商城")
+                                    .setDefaultDownloadUrl("http://kdt-cloud.qiniudn.com/koudaitong.apk")
+                                    .build()
+                                    .showDialog(versionInfo);
+
                             MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
                         }
                     });

@@ -17,24 +17,35 @@ import com.youzan.genesis.utils.StringUtil;
  */
 public class UpdateApp {
 
-    private static UpdateApp updateApp;
-
     private Context context;
-    private String appType;
+    private String name;
+    private String defaultDownloadUrl;
 
-    private UpdateApp(Context context, String appType) {
+    private UpdateApp(Context context, String name, String defaultDownloadUrl) {
         this.context = context;
-        this.appType = appType;
+        this.name = name;
+        this.defaultDownloadUrl = defaultDownloadUrl;
     }
 
-    public static UpdateApp getInstance(Context context, String appType) {
-        if (updateApp == null)
-            synchronized (UpdateApp.class) {
-                if (updateApp == null) {
-                    updateApp = new UpdateApp(context, appType);
-                }
-            }
-        return updateApp;
+    public static class Builder {
+
+        private Context context;
+        private String name;
+        private String defaultDownloadUrl;
+
+        public Builder(Context context, String name) {
+            this.context = context;
+            this.name = name;
+        }
+
+        public Builder setDefaultDownloadUrl(String url) {
+            this.defaultDownloadUrl = url;
+            return this;
+        }
+
+        public UpdateApp build() {
+            return new UpdateApp(context, name, defaultDownloadUrl);
+        }
     }
 
     /**
@@ -127,36 +138,38 @@ public class UpdateApp {
      */
     public void readyTodownloadFile(final VersionInfo versionInfo) {
 
-        final String apkName = appType + ".apk";
+        final String apkName = name + ".apk";
         final String upgradeUrl;
 
         if (null == versionInfo) {
-            upgradeUrl = context.getString(R.string.update_address);
+            upgradeUrl = defaultDownloadUrl;
 
         } else {
             upgradeUrl = versionInfo.getDownload();
         }
 
-        ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
-        NetworkInfo mobileNetworkInfo = conMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        NetworkInfo.State mobile = null;
-        if (null != mobileNetworkInfo) {
-            mobile = mobileNetworkInfo.getState();//mobile 3G Data Network
-        }
-        NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();//wifi
-        //只连了3G
-        if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
-                && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi) {
-            DialogUtil.showDialog(context, R.string.download_network_tip, R.string.confirm,
-                    new DialogUtil.OnClickListener() {
-                        @Override
-                        public void onClick() {
-                            openUpdateService(upgradeUrl, apkName);
-                        }
-                    }, false);
-        } else {
-            openUpdateService(upgradeUrl, apkName);
+        if (upgradeUrl != null) {
+            ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
+            NetworkInfo mobileNetworkInfo = conMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+            NetworkInfo.State mobile = null;
+            if (null != mobileNetworkInfo) {
+                mobile = mobileNetworkInfo.getState();//mobile 3G Data Network
+            }
+            NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();//wifi
+            //只连了3G
+            if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
+                    && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi) {
+                DialogUtil.showDialog(context, R.string.download_network_tip, R.string.confirm,
+                        new DialogUtil.OnClickListener() {
+                            @Override
+                            public void onClick() {
+                                openUpdateService(upgradeUrl, apkName);
+                            }
+                        }, false);
+            } else {
+                openUpdateService(upgradeUrl, apkName);
+            }
         }
     }
 
