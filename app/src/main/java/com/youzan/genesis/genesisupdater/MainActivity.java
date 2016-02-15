@@ -86,17 +86,13 @@ public class MainActivity extends AppCompatActivity {
                     JsonElement jsonElement = jsonObject.get(RESPONSE);
 
                     final VersionInfo versionInfo = new Gson().fromJson(jsonElement, VersionInfo.class);
-                    if (null != versionInfo) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                UpdateApp.getInstance(MainActivity.this, "有赞微商城").showDialog(versionInfo);
-
-                                MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
-                            }
-                        });
-                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            UpdateApp.getInstance(MainActivity.this, "有赞微商城").showDialog(versionInfo);
+                            MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
+                        }
+                    });
                 }
             }
 
