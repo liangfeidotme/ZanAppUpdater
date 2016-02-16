@@ -3,28 +3,20 @@ package com.youzan.genesis.utils;
 import android.os.Handler;
 import android.os.Looper;
 
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.zip.GZIPInputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by Francis on 15/11/5.
  */
 public class DownloadUtil {
     private static final int CONNECT_TIMEOUT = 10000;
-    private static final int DATA_TIMEOUT = 40000;
+    private static final int READ_TIMEOUT = 40000;
     private final static int DATA_BUFFER = 8192;
 
     private Handler handler;
@@ -41,7 +33,7 @@ public class DownloadUtil {
         return downloadUtil;
     }
 
-    private DownloadUtil(){
+    private DownloadUtil() {
         this.handler = new Handler(Looper.getMainLooper());
     }
 
@@ -63,6 +55,9 @@ public class DownloadUtil {
                 int currentSize = 0;
                 long totalSize = 0;
                 long lastDownload = 0L;
+                InputStream inputStream = null;
+                FileOutputStream fileOutputStream = null;
+                HttpURLConnection conn = null;
 
                 if (!append && dest.exists() && dest.isFile()) {
                     dest.delete();
@@ -78,34 +73,26 @@ public class DownloadUtil {
                         }
                     }
 
-                    HttpGet request = new HttpGet(urlStr);
-
+                    URL url = new URL(urlStr);
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setConnectTimeout(CONNECT_TIMEOUT);
+                    conn.setReadTimeout(READ_TIMEOUT);
                     if (currentSize > 0) {
-                        request.addHeader("RANGE", "bytes=" + currentSize + "-");
+                        conn.addRequestProperty("RANGE", "bytes=" + currentSize + "-");
                     }
+                    conn.connect();
 
-                    HttpParams params = new BasicHttpParams();
-                    HttpConnectionParams.setConnectionTimeout(params, CONNECT_TIMEOUT);
-                    HttpConnectionParams.setSoTimeout(params, DATA_TIMEOUT);
-                    HttpClient httpClient = new DefaultHttpClient(params);
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_PARTIAL) {
+                        inputStream = conn.getInputStream();
+                        remoteSize = conn.getContentLength() + totalSize;
 
-                    InputStream is = null;
-                    FileOutputStream os = null;
-                    HttpResponse response = httpClient.execute(request);
-                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK || response.getStatusLine().getStatusCode() == HttpStatus.SC_PARTIAL_CONTENT) {
-                        is = response.getEntity().getContent();
-                        // 如果返回206 则是相差的大小,所以加上之前已下载的
-                        remoteSize = response.getEntity().getContentLength() + totalSize;
-                        Header contentEncoding = response.getFirstHeader("Content-Encoding");
-                        if (contentEncoding != null && contentEncoding.getValue().equalsIgnoreCase("gzip")) {
-                            is = new GZIPInputStream(is);
-                        }
-                        os = new FileOutputStream(dest, append);
+                        fileOutputStream = new FileOutputStream(dest, append);
                         byte buffer[] = new byte[DATA_BUFFER];
                         int readSize = 0;
-                        while ((readSize = is.read(buffer)) > 0) {
-                            os.write(buffer, 0, readSize);
-                            os.flush();
+                        while ((readSize = inputStream.read(buffer)) > 0) {
+                            fileOutputStream.write(buffer, 0, readSize);
+                            fileOutputStream.flush();
                             totalSize += readSize;
                             if (downloadListener != null) {
 
@@ -123,13 +110,6 @@ public class DownloadUtil {
                                 }
                             }
                         }
-
-                        if (os != null) {
-                            os.close();
-                        }
-                        if (is != null) {
-                            is.close();
-                        }
                     }
 
                     if (totalSize <= 0) {
@@ -141,9 +121,7 @@ public class DownloadUtil {
                                 }
                             });
                         }
-                    }
-
-                    if (downloadListener != null) {
+                    } else if (downloadListener != null) {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -153,7 +131,7 @@ public class DownloadUtil {
                     }
 
                 } catch (final Exception e) {
-                    if (downloadListener != null){
+                    if (downloadListener != null) {
 
                         handler.post(new Runnable() {
                             @Override
@@ -161,13 +139,27 @@ public class DownloadUtil {
                                 downloadListener.downloadError(e.getMessage());
                             }
                         });
-
                     }
 
                 } finally {
-
+                    if (fileOutputStream != null) {
+                        try {
+                            fileOutputStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (conn != null) {
+                        conn.disconnect();
+                    }
                 }
-                //return totalSize;
             }
         }).start();
 
