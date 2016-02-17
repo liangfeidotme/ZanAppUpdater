@@ -158,7 +158,7 @@ public class UpdateAppService extends Service {
 
     private void startDownload() {
         isDownloading = true;
-        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, true, new DownloadUtil.DownloadListener() {
+        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, isRetry, new DownloadUtil.DownloadListener() {
             @Override
             public void downloading(int progress) {
                 showUpdateNotification(progress);
@@ -200,6 +200,9 @@ public class UpdateAppService extends Service {
         switch (msg.what) {
             case DOWNLOAD_SUCCESS:
                 ToastUtil.show(this, R.string.download_success);
+                if (mNotificationManager != null) {
+                    mNotificationManager.cancel(NOTIFY_ID);
+                }
                 FileUtil.install(this, apkFile);
                 break;
             case DOWNLOAD_FAIL:

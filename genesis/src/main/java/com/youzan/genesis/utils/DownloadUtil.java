@@ -95,7 +95,6 @@ public class DownloadUtil {
                             fileOutputStream.flush();
                             totalSize += readSize;
                             if (downloadListener != null) {
-
                                 // 防止过于频繁以致阻塞 每100KB刷新一次
                                 if (totalSize - lastDownload > (StringUtil.MB / 10.0)) {
                                     lastDownload = totalSize;

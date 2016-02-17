@@ -150,14 +150,16 @@ public class UpdateApp {
 
         if (upgradeUrl != null) {
             ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
             //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
             NetworkInfo mobileNetworkInfo = conMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
             NetworkInfo.State mobile = null;
             if (null != mobileNetworkInfo) {
-                mobile = mobileNetworkInfo.getState();//mobile 3G Data Network
+                mobile = mobileNetworkInfo.getState();
             }
-            NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();//wifi
-            //只连了3G
+
+            NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+
             if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
                     && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi) {
                 DialogUtil.showDialog(context, R.string.download_network_tip, R.string.confirm,

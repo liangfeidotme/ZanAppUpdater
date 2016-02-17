@@ -31,7 +31,7 @@ uploadArchives {
             }
 
             pom.packaging = 'aar'
-            pom.version = '0.2.1-SNAPSHOT' // SNAPSHOT 一定要大写！
+            pom.version = '0.2.2-SNAPSHOT' // SNAPSHOT 一定要大写！
             pom.groupId = 'com.youzan.mobile' // Attention!
             pom.artifactId = "genesis"
         }

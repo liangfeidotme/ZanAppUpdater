@@ -26,7 +26,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private static final String RESPONSE = "response";
     private static String CHECK_URL = "http://open.koudaitong.com/api/entry?v=1.0&sign=888d3eadc51ab458ecab5407c8d8816d&method=wsc.version.valid&sign_method=md5&version=3.0.0&app_id=a424d52df7f0723d6a33&timestamp=2015-11-02+11:49:28&type=android&format=json";
-    //private static String CHECK_URL = "http://open.koudaitong.com/api/entry?sign=a4dfd87aba2d950fa74e1182fbac653c&sign_method=md5&timestamp=2015-11-04+11:52:20&v=1.0&method=wsc.version.valid&app_id=a424d52df7f0723d6a33&format=json&type=android&version=3.1.1";
     private static final String PREF_VERSION_CHECK_TIME = "PREF_VERSION_CHECK_TIME";
     private static final long VERSION_CHECK_INTERVAL = 2 * 24 * 60 * 60 * 1000;
 
@@ -42,15 +41,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        checkUpdate(CHECK_URL, PREF_VERSION_CHECK_TIME, VERSION_CHECK_INTERVAL);
-    }
-
-    /**
-     * 项目发起检查版本的请求，传递Apk默认文件名、图片资源和返回的VersionInfo
-     */
     private void checkUpdate(String checkUrl, final String prefName, long checkInterval) {
         final SharedPreferences preferences = MyApplication.getInstance().getPrefs();
         long lastTime = preferences.getLong(prefName, 0);
