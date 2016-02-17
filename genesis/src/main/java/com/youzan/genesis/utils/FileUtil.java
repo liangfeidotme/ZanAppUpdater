@@ -39,8 +39,6 @@ public class FileUtil {
         long lastTime = apkFile.lastModified();
         long nowTime = new Date().getTime();
         return nowTime - lastTime > 10 * 60 * 1000;
-        //for test;
-        //return true;
     }
 
     public static boolean checkApkFileValid(Context context, File apkFile) {

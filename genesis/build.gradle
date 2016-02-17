@@ -7,8 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode 21
-        versionName "0.2.1"
+        versionCode 23
+        versionName "0.2.3"
     }
     buildTypes {
         release {
@@ -31,7 +31,7 @@ uploadArchives {
             }
 
             pom.packaging = 'aar'
-            pom.version = '0.2.2-SNAPSHOT' // SNAPSHOT 一定要大写！
+            pom.version = '0.2.3-SNAPSHOT' // SNAPSHOT 一定要大写！
             pom.groupId = 'com.youzan.mobile' // Attention!
             pom.artifactId = "genesis"
         }

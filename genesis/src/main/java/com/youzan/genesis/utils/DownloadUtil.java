@@ -45,7 +45,7 @@ public class DownloadUtil {
         void downloadError(String error);
     }
 
-    public void download(final String urlStr, final File dest, final boolean append, final DownloadListener downloadListener) {
+    public void download(final String urlStr, final String apkPath, final String apkName, final boolean append, final DownloadListener downloadListener) {
 
         new Thread(new Runnable() {
             @Override
@@ -59,13 +59,19 @@ public class DownloadUtil {
                 FileOutputStream fileOutputStream = null;
                 HttpURLConnection conn = null;
 
-                if (!append && dest.exists() && dest.isFile()) {
-                    dest.delete();
+                File savePath = new File(apkPath);
+                if (!savePath.exists()) {
+                    savePath.mkdirs();
+                }
+                File apkFile = new File(savePath, apkName);
+
+                if (!append && apkFile.exists() && apkFile.isFile()) {
+                    apkFile.delete();
                 }
 
                 try {
-                    if (append && dest.exists() && dest.isFile()) {
-                        FileInputStream fis = new FileInputStream(dest);
+                    if (append && apkFile.exists() && apkFile.isFile()) {
+                        FileInputStream fis = new FileInputStream(apkFile);
                         currentSize = fis.available();
                         totalSize = currentSize;
                         if (fis != null) {
@@ -87,7 +93,7 @@ public class DownloadUtil {
                         inputStream = conn.getInputStream();
                         remoteSize = conn.getContentLength() + totalSize;
 
-                        fileOutputStream = new FileOutputStream(dest, append);
+                        fileOutputStream = new FileOutputStream(apkFile, append);
                         byte buffer[] = new byte[DATA_BUFFER];
                         int readSize = 0;
                         while ((readSize = inputStream.read(buffer)) > 0) {

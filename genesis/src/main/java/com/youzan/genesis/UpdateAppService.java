@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
@@ -27,6 +28,8 @@ public class UpdateAppService extends Service {
     public static final String ARG_DOWNLOAD_FAIL_RETRY = "DOWNLOAD_FAIL_RETRY";
     private static boolean isDownloading = false;
     private File apkFile = null;
+    private String apkPath;
+    private String apkName;
     private DownloadInfo downloadInfo;
     private static final int DOWNLOAD_FAIL = -1;
     private static final int DOWNLOAD_SUCCESS = 0;
@@ -90,7 +93,9 @@ public class UpdateAppService extends Service {
         Parcelable parcelable = intent.getParcelableExtra(ARG_DOWNLOAD_INFO);
         if (parcelable != null && parcelable instanceof DownloadInfo) {
             downloadInfo = (DownloadInfo) parcelable;
-            apkFile = new File(getExternalFilesDir("download_app") + "/" + downloadInfo.getFileName());
+            apkPath = Environment.getExternalStorageDirectory().getPath() + "/download_app";
+            apkName = downloadInfo.getFileName();
+            apkFile = new File(apkPath, apkName);
         } else {
             stopSelf();
         }
@@ -158,7 +163,7 @@ public class UpdateAppService extends Service {
 
     private void startDownload() {
         isDownloading = true;
-        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkFile, isRetry, new DownloadUtil.DownloadListener() {
+        DownloadUtil.newInstance().download(downloadInfo.getDownloadUrl(), apkPath, apkName, isRetry, new DownloadUtil.DownloadListener() {
             @Override
             public void downloading(int progress) {
                 showUpdateNotification(progress);
