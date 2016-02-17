@@ -17,6 +17,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        maven { url 'http://maven.qima-inc.com/content/repositories/snapshots' }
+        maven { url 'http://maven.qima-inc.com/content/repositories/releases/' }
+    }
 }
 
 dependencies {

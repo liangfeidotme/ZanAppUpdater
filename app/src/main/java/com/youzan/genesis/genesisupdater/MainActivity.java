@@ -19,12 +19,6 @@ import com.youzan.genesis.info.VersionInfo;
 
 import java.io.IOException;
 
-/**
- * Created by Francis on 15/10/28.
- * 在主界面{@link #onStart()}的时候检查更新
- * 是否需要更新的请求由项目发起
- * 由项目显示通知
- */
 public class MainActivity extends AppCompatActivity {
 
     /**
