@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             new UpdateApp.Builder(MainActivity.this, "有赞微商城")
-                                    .setDefaultDownloadUrl("http://kdt-cloud.qiniudn.com/koudaitong.apk")
+                                    .setUrl("http://kdt-cloud.qiniudn.com/koudaitong.apk")
                                     .build()
                                     .showDialog(versionInfo);
 

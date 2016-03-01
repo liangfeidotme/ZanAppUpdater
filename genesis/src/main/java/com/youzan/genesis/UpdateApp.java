@@ -38,7 +38,7 @@ public class UpdateApp {
             this.name = name;
         }
 
-        public Builder setDefaultDownloadUrl(String url) {
+        public Builder setUrl(String url) {
             this.defaultDownloadUrl = url;
             return this;
         }
@@ -72,7 +72,7 @@ public class UpdateApp {
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
-                            readyTodownloadFile(versionInfo);
+                            download(versionInfo);
                         }
                     },
                     new DialogUtil.OnClickListener() {
@@ -91,7 +91,7 @@ public class UpdateApp {
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
-                            readyTodownloadFile(versionInfo);
+                            download(versionInfo);
                         }
                     },
                     new DialogUtil.OnClickListener() {
@@ -111,7 +111,7 @@ public class UpdateApp {
                 new DialogUtil.OnClickListener() {
                     @Override
                     public void onClick() {
-                        readyTodownloadFile(null);
+                        download(null);
                     }
                 }, false);
     }
@@ -136,7 +136,11 @@ public class UpdateApp {
     /**
      * 直接下载，不显示dialog
      */
-    public void readyTodownloadFile(final VersionInfo versionInfo) {
+    public void download(){
+        download(null);
+    }
+
+    public void download(final VersionInfo versionInfo) {
 
         final String apkName = name + ".apk";
         final String upgradeUrl;

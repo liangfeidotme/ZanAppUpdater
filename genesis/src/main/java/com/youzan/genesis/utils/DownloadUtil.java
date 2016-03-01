@@ -56,6 +56,7 @@ public class DownloadUtil {
                 long totalSize = 0;
                 long lastDownload = 0L;
                 InputStream inputStream = null;
+                FileInputStream fileInputStream = null;
                 FileOutputStream fileOutputStream = null;
                 HttpURLConnection conn = null;
 
@@ -71,12 +72,9 @@ public class DownloadUtil {
 
                 try {
                     if (append && apkFile.exists() && apkFile.isFile()) {
-                        FileInputStream fis = new FileInputStream(apkFile);
-                        currentSize = fis.available();
+                        fileInputStream = new FileInputStream(apkFile);
+                        currentSize = fileInputStream.available();
                         totalSize = currentSize;
-                        if (fis != null) {
-                            fis.close();
-                        }
                     }
 
                     URL url = new URL(urlStr);
@@ -147,6 +145,13 @@ public class DownloadUtil {
                     }
 
                 } finally {
+                    if (fileInputStream != null) {
+                        try {
+                            fileInputStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     if (fileOutputStream != null) {
                         try {
                             fileOutputStream.close();
