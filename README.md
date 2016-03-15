@@ -8,5 +8,5 @@ GenesisUpdater
 依赖
 ---
 ```groovy
-compile 'com.youzan.mobile:genesis:0.3.0-SNAPSHOT'
+compile 'com.youzan.mobile:genesis:0.3.1-SNAPSHOT'
 ```
