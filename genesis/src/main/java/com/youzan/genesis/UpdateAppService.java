@@ -112,8 +112,9 @@ public class UpdateAppService extends Service {
         mPendingIntent = PendingIntent.getActivity(UpdateAppService.this, NOTIFY_ID, completingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mBuilder = new NotificationCompat.Builder(this);
-        mBuilder.setSmallIcon(R.drawable.download_icon)
-                .setContentIntent(mPendingIntent)
+
+        mBuilder.setSmallIcon(R.drawable.ic_download);
+        mBuilder.setContentIntent(mPendingIntent)
                 .setWhen(System.currentTimeMillis())
                 .setDefaults(~Notification.DEFAULT_ALL)
                 .setAutoCancel(false)
@@ -149,8 +150,8 @@ public class UpdateAppService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
-        builder.setSmallIcon(R.drawable.download_icon)
-                .setContentTitle(apkFile.getName())
+        builder.setSmallIcon(R.drawable.ic_download);
+        builder.setContentTitle(apkFile.getName())
                 .setContentText(getString(R.string.download_fail_retry))
                 .setContentIntent(retryIntent)
                 .setWhen(System.currentTimeMillis())
