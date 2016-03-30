@@ -25,7 +25,8 @@ public class MainActivity extends AppCompatActivity {
      * for test
      */
     private static final String RESPONSE = "response";
-    private static String CHECK_URL = "http://open.koudaitong.com/api/entry?v=1.0&sign=888d3eadc51ab458ecab5407c8d8816d&method=wsc.version.valid&sign_method=md5&version=3.0.0&app_id=a424d52df7f0723d6a33&timestamp=2015-11-02+11:49:28&type=android&format=json";
+
+    private static String CHECK_URL = "http://open.koudaitong.com/api/entry?v=1.0&sign=a02eb453b7851d0177a5194c86854636&method=wsc.version.valid&sign_method=md5&version=3.6.0.1&app_id=a424d52df7f0723d6a33&timestamp=2016-03-30%2018%3A42%3A37&type=android&format=json";
     private static final String PREF_VERSION_CHECK_TIME = "PREF_VERSION_CHECK_TIME";
     private static final long VERSION_CHECK_INTERVAL = 2 * 24 * 60 * 60 * 1000;
 
@@ -73,12 +74,17 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            new UpdateApp.Builder(MainActivity.this, "有赞微商城")
-                                    .setUrl("http://kdt-cloud.qiniudn.com/koudaitong.apk")
-                                    .build()
-                                    .showDialog(versionInfo);
+                            if (!UpdateApp.isVersionValid(versionInfo)
+                                    || UpdateApp.haveNewVersion(versionInfo)) {
+                                new UpdateApp.Builder(MainActivity.this, "有赞微商城", versionInfo.getDownload())
+                                        .title(versionInfo.getTitle())
+                                        .content(versionInfo.getContent())
+                                        .cancelableDialog(true)
+                                        .build()
+                                        .showDialog();
 
-                            MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
+                                MyApplication.getInstance().getPrefs().edit().putLong(prefName, System.currentTimeMillis()).apply();
+                            }
                         }
                     });
                 }

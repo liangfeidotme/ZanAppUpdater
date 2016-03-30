@@ -19,101 +19,81 @@ public class UpdateApp {
 
     private Context context;
     private String name;
-    private String defaultDownloadUrl;
+    private String title = "";
+    private String content = "";
+    private boolean cancelable = true;
+    private String url;
 
-    private UpdateApp(Context context, String name, String defaultDownloadUrl) {
+    private UpdateApp(Context context, String name, String url, String title, String content, boolean cancelable) {
         this.context = context;
         this.name = name;
-        this.defaultDownloadUrl = defaultDownloadUrl;
+        this.url = url;
+        this.title = title;
+        this.content = content;
+        this.cancelable = cancelable;
     }
 
     public static class Builder {
 
         private Context context;
         private String name;
-        private String defaultDownloadUrl;
+        private String url;
+        private String title;
+        private String content;
+        private boolean cancelableDialog;
 
-        public Builder(Context context, String name) {
+        public Builder(Context context, String name, String url) {
             this.context = context;
             this.name = name;
+            this.url = url;
         }
 
-        public Builder setUrl(String url) {
-            this.defaultDownloadUrl = url;
+        public Builder title(String title) {
+            this.title = title;
+            return this;
+        }
+
+        public Builder content(String content) {
+            this.content = content;
+            return this;
+        }
+
+        public Builder cancelableDialog(Boolean cancelableDialog) {
+            this.cancelableDialog = cancelableDialog;
             return this;
         }
 
         public UpdateApp build() {
-            return new UpdateApp(context, name, defaultDownloadUrl);
+            return new UpdateApp(context, name, url, title, content, cancelableDialog);
         }
     }
 
-    /**
-     * 对外部提供的主入口
-     */
-    public void showDialog(VersionInfo versionInfo) {
-        if (!isVersionValid(versionInfo)) {
-            showUpdateVersionDialog();
-        } else if (haveNewVersion(versionInfo)) {
-            showUpdateVersionDialog(versionInfo);
-        }
-    }
-
-    /**
-     * 可取消的dialog
-     */
-    public void showUpdateVersionDialog(final VersionInfo versionInfo) {
-
-        //只显示title
-        if ("".equals(versionInfo.getContent())) {
-            DialogUtil.showDialog(context, versionInfo.getTitle(),
+    public void showDialog() {
+        if (cancelable) {
+            DialogUtil.showDialog(context, title, content,
                     context.getString(R.string.update_app_now),
                     context.getString(R.string.update_app_next_time),
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
-                            download(versionInfo);
+                            download();
                         }
                     },
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
                         }
-                    }, false
+                    }, cancelable
             );
-        }
-        //显示title和content
-        else {
-            SpannableStringBuilder span = buildContentText(versionInfo);
-            DialogUtil.showDialog(context, versionInfo.getTitle(), span,
-                    context.getString(R.string.update_app_now),
-                    context.getString(R.string.update_app_next_time),
+        } else {
+            DialogUtil.showDialogNoNegativeButton(context, title, content, context.getString(R.string.update_app_now),
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
-                            download(versionInfo);
+                            download();
                         }
-                    },
-                    new DialogUtil.OnClickListener() {
-                        @Override
-                        public void onClick() {
-                        }
-                    }, false
-            );
+                    }, cancelable);
         }
-    }
-
-    /**
-     * 强制更新 不可取消
-     */
-    public void showUpdateVersionDialog() {
-        DialogUtil.showDialogNoNegativeButton(context, R.string.please_update_to_newest_version_hard, R.string.update_app_now,
-                new DialogUtil.OnClickListener() {
-                    @Override
-                    public void onClick() {
-                        download(null);
-                    }
-                }, false);
     }
 
     /**
@@ -133,26 +113,9 @@ public class UpdateApp {
         return null != versionInfo && versionInfo.isIs_valid();
     }
 
-    /**
-     * 直接下载，不显示dialog
-     */
-    public void download(){
-        download(null);
-    }
-
-    public void download(final VersionInfo versionInfo) {
-
+    public void download() {
         final String apkName = name + ".apk";
-        final String upgradeUrl;
-
-        if (null == versionInfo) {
-            upgradeUrl = defaultDownloadUrl;
-
-        } else {
-            upgradeUrl = versionInfo.getDownload();
-        }
-
-        if (upgradeUrl != null) {
+        if (url != null) {
             ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
             //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
@@ -170,11 +133,11 @@ public class UpdateApp {
                         new DialogUtil.OnClickListener() {
                             @Override
                             public void onClick() {
-                                openUpdateService(upgradeUrl, apkName);
+                                openUpdateService(url, apkName);
                             }
                         }, false);
             } else {
-                openUpdateService(upgradeUrl, apkName);
+                openUpdateService(url, apkName);
             }
         }
     }

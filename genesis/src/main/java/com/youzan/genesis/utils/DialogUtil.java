@@ -16,9 +16,9 @@ public class DialogUtil {
 
     private static android.support.v7.app.AlertDialog alertDialog;
 
-    public static void showDialog(Context context, int message, int positiveMessage, final OnClickListener positiveClickListener, boolean cancelable){
+    public static void showDialog(Context context, int message, int positiveMessage, final OnClickListener positiveClickListener, boolean cancelable) {
         dismissDialog();
-        if(null != alertDialog && alertDialog.isShowing()) {
+        if (null != alertDialog && alertDialog.isShowing()) {
             return;
         }
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(context);
@@ -38,53 +38,20 @@ public class DialogUtil {
         alertDialog.show();
     }
 
-    public static void dismissDialog(){
-        if(null != alertDialog && alertDialog.isShowing() && null != alertDialog.getWindow()){
+    public static void dismissDialog() {
+        if (null != alertDialog && alertDialog.isShowing() && null != alertDialog.getWindow()) {
             try {
                 alertDialog.dismiss();
-            }
-            catch (IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
             }
         }
-    }
-
-    public static void showDialog(Context context, String message, String positiveMessage, String negativeMessage,
-                                  final OnClickListener positiveClickListener,
-                                  final OnClickListener negativeClickListener, boolean cancelable){
-        dismissDialog();
-        if(null != alertDialog && alertDialog.isShowing()) {
-            return;
-        }
-
-        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(context);
-        builder.setCancelable(cancelable)
-                .setPositiveButton(positiveMessage, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (null != positiveClickListener) {
-                            positiveClickListener.onClick();
-                        }
-                    }
-                })
-                .setNegativeButton(negativeMessage, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (null != negativeClickListener) {
-                            negativeClickListener.onClick();
-                        }
-                    }
-                })
-                .setMessage(message);
-        alertDialog = builder.create();
-        setDialogColor(context);
-        alertDialog.show();
     }
 
     public static void showDialog(Context context, String title, CharSequence message, String positiveMessage,
                                   String negativeMessage, final OnClickListener positiveClickListener,
-                                  final OnClickListener negativeClickListener, boolean cancelable){
+                                  final OnClickListener negativeClickListener, boolean cancelable) {
         dismissDialog();
-        if(null != alertDialog && alertDialog.isShowing()) {
+        if (null != alertDialog && alertDialog.isShowing()) {
             return;
         }
 
@@ -113,9 +80,9 @@ public class DialogUtil {
         alertDialog.show();
     }
 
-    public static void showDialogNoNegativeButton(Context context, int message, int positiveMessage, final OnClickListener positiveClickListener, boolean cancelable){
+    public static void showDialogNoNegativeButton(Context context, String title, String message, String positiveMessage, final OnClickListener positiveClickListener, boolean cancelable) {
         dismissDialog();
-        if(null != alertDialog && alertDialog.isShowing()) {
+        if (null != alertDialog && alertDialog.isShowing()) {
             return;
         }
 
@@ -129,6 +96,7 @@ public class DialogUtil {
                         }
                     }
                 })
+                .setTitle(title)
                 .setMessage(message);
         alertDialog = builder.create();
         setDialogColor(context);
@@ -137,9 +105,10 @@ public class DialogUtil {
 
     /**
      * 修改按钮颜色
+     *
      * @param context
      */
-    private static void setDialogColor(final Context context){
+    private static void setDialogColor(final Context context) {
         alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface dialog) {
@@ -150,7 +119,7 @@ public class DialogUtil {
 
     }
 
-    public interface OnClickListener{
+    public interface OnClickListener {
         void onClick();
     }
 }
