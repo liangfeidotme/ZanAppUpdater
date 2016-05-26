@@ -4,75 +4,94 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Bundle;
-import android.text.SpannableStringBuilder;
+import android.net.Uri;
 
 import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.info.VersionInfo;
 import com.youzan.genesis.utils.DialogUtil;
-import com.youzan.genesis.utils.StringUtil;
+
 
 /**
  * Created by Francis on 15/10/28.
  */
 public class UpdateApp {
 
-    private Context context;
-    private String name;
-    private String title = "";
-    private String content = "";
-    private boolean cancelable = true;
-    private String url;
+    private Context mContext;
+    private String mName;
+    private String mUrl;
+    private String mTitle = "";
+    private String mContent = "";
+    private boolean mCancelable = true;
+    private boolean mSilent = false;
+    private OnSilentDownloadListener mOnSilentDownloadListener;
+    private UpdateAppService.ServiceListener mServiceListener;
 
-    private UpdateApp(Context context, String name, String url, String title, String content, boolean cancelable) {
-        this.context = context;
-        this.name = name;
-        this.url = url;
-        this.title = title;
-        this.content = content;
-        this.cancelable = cancelable;
+    private UpdateApp(Context context, String name, String url, String title, String content,
+                      boolean cancelable, boolean silent, OnSilentDownloadListener listener) {
+        this.mContext = context;
+        this.mName = name;
+        this.mUrl = url;
+        this.mTitle = title;
+        this.mContent = content;
+        this.mCancelable = cancelable;
+        this.mSilent = silent;
+        this.mOnSilentDownloadListener = listener;
     }
 
     public static class Builder {
 
-        private Context context;
-        private String name;
-        private String url;
-        private String title;
-        private String content;
-        private boolean cancelableDialog;
+        private Context mBuilderContext;
+        private String mBuilderName;
+        private String mBuilderUrl;
+        private String mBuilderTitle;
+        private String mBuilderContent;
+        private boolean mBuilderCancelableDialog;
+        private boolean mBuilderSilent;
+        private OnSilentDownloadListener mBuilderOnSilentDownloadListener;
 
         public Builder(Context context, String name, String url) {
-            this.context = context;
-            this.name = name;
-            this.url = url;
+            this.mBuilderContext = context;
+            this.mBuilderName = name;
+            this.mBuilderUrl = url;
         }
 
         public Builder title(String title) {
-            this.title = title;
+            this.mBuilderTitle = title;
             return this;
         }
 
         public Builder content(String content) {
-            this.content = content;
+            this.mBuilderContent = content;
             return this;
         }
 
         public Builder cancelableDialog(Boolean cancelableDialog) {
-            this.cancelableDialog = cancelableDialog;
+            this.mBuilderCancelableDialog = cancelableDialog;
+            return this;
+        }
+
+        public Builder silent(boolean silent) {
+            this.mBuilderSilent = silent;
+            return this;
+        }
+
+        public Builder addSilentListener(OnSilentDownloadListener listener) {
+            this.mBuilderOnSilentDownloadListener = listener;
             return this;
         }
 
         public UpdateApp build() {
-            return new UpdateApp(context, name, url, title, content, cancelableDialog);
+            return new UpdateApp(mBuilderContext, mBuilderName, mBuilderUrl, mBuilderTitle,
+                    mBuilderContent, mBuilderCancelableDialog, mBuilderSilent,
+                    mBuilderOnSilentDownloadListener);
         }
     }
 
     public void showDialog() {
-        if (cancelable) {
-            DialogUtil.showDialog(context, title, content,
-                    context.getString(R.string.update_app_now),
-                    context.getString(R.string.update_app_next_time),
+        if (mCancelable) {
+            DialogUtil.showDialog(mContext, mTitle, mContent,
+                    mContext.getString(R.string.update_app_now),
+                    mContext.getString(R.string.update_app_next_time),
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
@@ -83,16 +102,17 @@ public class UpdateApp {
                         @Override
                         public void onClick() {
                         }
-                    }, cancelable
+                    }, mCancelable
             );
         } else {
-            DialogUtil.showDialogNoNegativeButton(context, title, content, context.getString(R.string.update_app_now),
+            DialogUtil.showDialogNoNegativeButton(mContext, mTitle, mContent, mContext.getString(R
+                            .string.update_app_now),
                     new DialogUtil.OnClickListener() {
                         @Override
                         public void onClick() {
                             download();
                         }
-                    }, cancelable);
+                    }, mCancelable);
         }
     }
 
@@ -114,9 +134,10 @@ public class UpdateApp {
     }
 
     public void download() {
-        final String apkName = name + ".apk";
-        if (url != null) {
-            ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final String apkName = mName + ".apk";
+        if (mUrl != null) {
+            ConnectivityManager conMan = (ConnectivityManager) mContext.getSystemService(Context
+                    .CONNECTIVITY_SERVICE);
 
             //有些平板不支持ConnectivityManager.TYPE_MOBILE类型
             NetworkInfo mobileNetworkInfo = conMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
@@ -125,19 +146,21 @@ public class UpdateApp {
                 mobile = mobileNetworkInfo.getState();
             }
 
-            NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+            NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+                    .getState();
 
             if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
-                    && NetworkInfo.State.CONNECTED != wifi && NetworkInfo.State.CONNECTING != wifi) {
-                DialogUtil.showDialog(context, R.string.download_network_tip, R.string.confirm,
+                    && NetworkInfo.State.CONNECTED != wifi
+                    && NetworkInfo.State.CONNECTING != wifi) {
+                DialogUtil.showDialog(mContext, R.string.download_network_tip, R.string.confirm,
                         new DialogUtil.OnClickListener() {
                             @Override
                             public void onClick() {
-                                openUpdateService(url, apkName);
+                                openUpdateService(mUrl, apkName);
                             }
                         }, false);
             } else {
-                openUpdateService(url, apkName);
+                openUpdateService(mUrl, apkName);
             }
         }
     }
@@ -147,24 +170,37 @@ public class UpdateApp {
      */
     private void openUpdateService(final String url, final String fileName) {
 
-        Intent updateIntent = new Intent(context, UpdateAppService.class);
-        Bundle bundle = new Bundle();
+        Intent updateIntent = new Intent(mContext, UpdateAppService.class);
         DownloadInfo info = new DownloadInfo();
         info.setDownloadUrl(url);
         info.setFileName(fileName);
-        bundle.putParcelable(UpdateAppService.ARG_DOWNLOAD_INFO, info);
-        updateIntent.putExtras(bundle);
-        context.startService(updateIntent);
+        updateIntent.putExtra(UpdateAppService.ARG_DOWNLOAD_INFO, info);
+        updateIntent.putExtra(UpdateAppService.ARG_SILENT, mSilent);
+
+        mServiceListener = new UpdateAppService.ServiceListener() {
+
+            @Override
+            public void onSuccess(Uri fileUri) {
+                if (mOnSilentDownloadListener != null) {
+                    mOnSilentDownloadListener.onSuccess(fileUri);
+                }
+            }
+
+            @Override
+            public void onError(String msg) {
+                if (mOnSilentDownloadListener != null) {
+                    mOnSilentDownloadListener.onError(msg);
+                }
+            }
+        };
+
+        UpdateAppService.addServiceListener(mServiceListener);
+        mContext.startService(updateIntent);
     }
 
-    private SpannableStringBuilder buildContentText(VersionInfo versionInfo) {
-        if (versionInfo == null) {
-            return new SpannableStringBuilder();
-        }
-        String fileSizeText = String.format("\n安装包大小: %s", StringUtil.friendlyFileSize(versionInfo.getFile_size()));
-        String contentText = String.format("%s\n%s", versionInfo.getContent(), fileSizeText).replace(";", "\n");
+    public interface OnSilentDownloadListener {
+        void onSuccess(Uri fileUri);
 
-        return new SpannableStringBuilder(contentText);
+        void onError(String msg);
     }
-
 }
