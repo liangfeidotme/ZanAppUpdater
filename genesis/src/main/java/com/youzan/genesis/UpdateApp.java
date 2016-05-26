@@ -149,7 +149,10 @@ public class UpdateApp {
             NetworkInfo.State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
                     .getState();
 
-            if ((NetworkInfo.State.CONNECTED == mobile || NetworkInfo.State.CONNECTING == mobile)
+            if (mSilent) {
+                openUpdateService(mUrl, apkName);
+            } else if ((NetworkInfo.State.CONNECTED == mobile
+                    || NetworkInfo.State.CONNECTING == mobile)
                     && NetworkInfo.State.CONNECTED != wifi
                     && NetworkInfo.State.CONNECTING != wifi) {
                 DialogUtil.showDialog(mContext, R.string.download_network_tip, R.string.confirm,
