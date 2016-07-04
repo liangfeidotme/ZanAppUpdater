@@ -1,5 +1,8 @@
 package com.youzan.genesis;
 
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -9,6 +12,7 @@ import android.net.Uri;
 import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.info.VersionInfo;
 import com.youzan.genesis.utils.DialogUtil;
+import com.youzan.genesis.utils.UpdateDialogFragment;
 
 
 /**
@@ -16,7 +20,7 @@ import com.youzan.genesis.utils.DialogUtil;
  */
 public class UpdateApp {
 
-    private Context mContext;
+    private Activity mContext;
     private String mName;
     private String mUrl;
     private String mTitle = "";
@@ -26,7 +30,7 @@ public class UpdateApp {
     private OnSilentDownloadListener mOnSilentDownloadListener;
     private UpdateAppService.ServiceListener mServiceListener;
 
-    private UpdateApp(Context context, String name, String url, String title, String content,
+    private UpdateApp(Activity context, String name, String url, String title, String content,
                       boolean cancelable, boolean silent, OnSilentDownloadListener listener) {
         this.mContext = context;
         this.mName = name;
@@ -40,7 +44,7 @@ public class UpdateApp {
 
     public static class Builder {
 
-        private Context mBuilderContext;
+        private Activity mBuilderContext;
         private String mBuilderName;
         private String mBuilderUrl;
         private String mBuilderTitle;
@@ -49,7 +53,7 @@ public class UpdateApp {
         private boolean mBuilderSilent;
         private OnSilentDownloadListener mBuilderOnSilentDownloadListener;
 
-        public Builder(Context context, String name, String url) {
+        public Builder(Activity context, String name, String url) {
             this.mBuilderContext = context;
             this.mBuilderName = name;
             this.mBuilderUrl = url;
@@ -88,32 +92,20 @@ public class UpdateApp {
     }
 
     public void showDialog() {
-        if (mCancelable) {
-            DialogUtil.showDialog(mContext, mTitle, mContent,
-                    mContext.getString(R.string.update_app_now),
-                    mContext.getString(R.string.update_app_next_time),
-                    new DialogUtil.OnClickListener() {
-                        @Override
-                        public void onClick() {
-                            download();
-                        }
-                    },
-                    new DialogUtil.OnClickListener() {
-                        @Override
-                        public void onClick() {
-                        }
-                    }, mCancelable
-            );
-        } else {
-            DialogUtil.showDialogNoNegativeButton(mContext, mTitle, mContent, mContext.getString(R
-                            .string.update_app_now),
-                    new DialogUtil.OnClickListener() {
-                        @Override
-                        public void onClick() {
-                            download();
-                        }
-                    }, mCancelable);
+        FragmentTransaction ft = mContext.getFragmentManager().beginTransaction();
+        Fragment prev = mContext.getFragmentManager().findFragmentByTag("update_dialog");
+        if (prev != null) {
+            ft.remove(prev);
         }
+        UpdateDialogFragment newFragment = UpdateDialogFragment
+                .newInstance(mTitle, mContent, mCancelable);
+        newFragment.setPositiveClickListener(new UpdateDialogFragment.IPositiveClickListener() {
+            @Override
+            public void positiveClick() {
+                download();
+            }
+        });
+        newFragment.show(ft, "update_dialog");
     }
 
     /**

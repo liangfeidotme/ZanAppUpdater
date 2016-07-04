@@ -3,4 +3,5 @@
     <color name="metarial_dialog_positive">#1A70F0</color>
     <color name="metarial_dialog_negative">#222</color>
     <color name="item_text_hint">#999</color>
+    <color name="item_text">#505050</color>
 </resources>

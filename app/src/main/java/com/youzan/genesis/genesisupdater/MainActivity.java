@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
                         "有赞", "http://www.eoemarket.com/download/356118_0")
                         .title("title")
                         .content("content")
-                        .cancelableDialog(false)
+                        .cancelableDialog(true)
                         .build()
                         .showDialog();
             }
