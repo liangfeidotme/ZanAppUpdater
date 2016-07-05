@@ -1,5 +1,6 @@
 package com.youzan.genesis.utils;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,7 +24,8 @@ public class DialogUtil {
                                   final OnClickListener positiveClickListener, boolean
                                           cancelable) {
         dismissDialog();
-        if (null != alertDialog && alertDialog.isShowing()) {
+        if (null != alertDialog && alertDialog.isShowing()
+                || (context instanceof Activity) && ((Activity) context).isFinishing()) {
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -87,7 +89,6 @@ public class DialogUtil {
     public static Dialog buildDialog(Context context, View view) {
         return buildDialog(context, view, null, null, null, null, null, false);
     }
-
 
     /**
      * 修改按钮颜色
