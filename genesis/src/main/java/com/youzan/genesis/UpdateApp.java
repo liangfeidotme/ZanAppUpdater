@@ -105,7 +105,8 @@ public class UpdateApp {
                 download();
             }
         });
-        newFragment.show(ft, "update_dialog");
+        ft.add(newFragment, "update_dialog");
+        ft.commitAllowingStateLoss();
     }
 
     /**

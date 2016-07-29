@@ -50,7 +50,11 @@ public class UpdateAppService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        init(intent);
+        if (intent != null) {
+            init(intent);
+        } else {
+            return super.onStartCommand(intent, START_REDELIVER_INTENT, startId);
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
