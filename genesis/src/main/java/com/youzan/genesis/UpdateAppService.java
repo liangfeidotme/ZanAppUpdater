@@ -190,9 +190,7 @@ public class UpdateAppService extends Service {
     private void handleError(String error) {
         if (!mSilent) {
             ToastUtil.show(this, R.string.download_fail);
-            //重新下载
             showErrorNotification();
-            // TODO: 16/5/26  test do again
         } else if (mListener != null) {
             mListener.onError(error);
         }
@@ -203,13 +201,16 @@ public class UpdateAppService extends Service {
     private void handleSuccess() {
         if (mApkFile.exists() && mApkFile.isFile()
                 && FileUtil.checkApkFileValid(UpdateAppService.this, mApkFile)) {
+
             if (!mSilent) {
                 ToastUtil.show(this, R.string.download_success);
                 if (mNotificationManager != null) {
                     mNotificationManager.cancel(NOTIFY_ID);
                 }
                 FileUtil.install(this, mApkFile);
-            } else if (mListener != null) {
+            }
+
+            if (mListener != null) {
                 mListener.onSuccess(Uri.fromFile(mApkFile));
             }
         } else {

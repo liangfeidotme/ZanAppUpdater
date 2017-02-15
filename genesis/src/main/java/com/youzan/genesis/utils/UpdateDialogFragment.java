@@ -5,6 +5,7 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -30,8 +31,15 @@ public class UpdateDialogFragment extends DialogFragment
     private boolean mCancelable = true;
     private String mTitle = "";
     private String mContent = "";
-    private IPositiveClickListener mPositiveClickListener;
+    private OnPositiveClickListener mPositiveClickListener;
     private TextView mPositiveTextView;
+
+    public static final int STATE_LOAD = 0x00;
+    public static final int STATE_LOADING = 0x01;
+    public static final int STATE_RETRY = 0x02;
+    public static final int STATE_INSTALL = 0x03;
+
+    private int state = STATE_LOAD;
 
     public static UpdateDialogFragment newInstance(String title,
                                                    String content,
@@ -122,8 +130,22 @@ public class UpdateDialogFragment extends DialogFragment
         String[] perms = {WRITE_EXTERNAL_STORAGE};
         if (ZanPermissions.hasPermissions(getActivity(), perms)) {
             if (mPositiveClickListener != null) {
-                mPositiveClickListener.positiveClick();
-                dismiss();
+                switch (state) {
+                    case STATE_LOAD:
+                        mPositiveClickListener.onLoad();
+                        setState(STATE_LOADING);
+                        break;
+                    case STATE_RETRY:
+                        mPositiveClickListener.onRetry();
+                        setState(STATE_LOADING);
+                        break;
+                    case STATE_INSTALL:
+                        mPositiveClickListener.onInstall();
+                        break;
+                }
+                if (mCancelable) {
+                    dismiss();
+                }
             }
         } else {
             ZanPermissions.requestPermissions(this, RC_WRITE_EXTERNAL_STORAGE, perms);
@@ -141,12 +163,38 @@ public class UpdateDialogFragment extends DialogFragment
         }
     }
 
-    public void setPositiveClickListener(IPositiveClickListener positiveClickListener) {
+    public void setPositiveClickListener(OnPositiveClickListener positiveClickListener) {
         mPositiveClickListener = positiveClickListener;
     }
 
-    public interface IPositiveClickListener {
-        void positiveClick();
+    public void setState(final int state) {
+        this.state = state;
+
+        switch (state) {
+            case STATE_LOAD:
+                mPositiveTextView.setText(R.string.update_app_now);
+                break;
+            case STATE_RETRY:
+                mPositiveTextView.setText(R.string.download_fail_retry);
+                break;
+            case STATE_INSTALL:
+                mPositiveTextView.setText(R.string.install);
+                break;
+            case STATE_LOADING:
+                mPositiveTextView.setText(R.string.downloading);
+                break;
+
+        }
+    }
+
+    public void setPositiveText(@StringRes final int textResId) {
+        mPositiveTextView.setText(textResId);
+    }
+
+    public interface OnPositiveClickListener {
+        void onLoad();
+        void onRetry();
+        void onInstall();
     }
 
 }

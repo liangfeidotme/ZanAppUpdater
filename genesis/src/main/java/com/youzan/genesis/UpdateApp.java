@@ -8,11 +8,15 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.text.TextUtils;
 
 import com.youzan.genesis.info.DownloadInfo;
 import com.youzan.genesis.info.VersionInfo;
 import com.youzan.genesis.utils.DialogUtil;
+import com.youzan.genesis.utils.FileUtil;
 import com.youzan.genesis.utils.UpdateDialogFragment;
+
+import java.io.File;
 
 
 /**
@@ -29,6 +33,9 @@ public class UpdateApp {
     private boolean mSilent = false;
     private OnSilentDownloadListener mOnSilentDownloadListener;
     private UpdateAppService.ServiceListener mServiceListener;
+
+    private File apkFile;
+    private UpdateDialogFragment dlg;
 
     private UpdateApp(Activity context, String name, String url, String title, String content,
                       boolean cancelable, boolean silent, OnSilentDownloadListener listener) {
@@ -97,15 +104,28 @@ public class UpdateApp {
         if (prev != null) {
             ft.remove(prev);
         }
-        UpdateDialogFragment newFragment = UpdateDialogFragment
+
+        dlg = UpdateDialogFragment
                 .newInstance(mTitle, mContent, mCancelable);
-        newFragment.setPositiveClickListener(new UpdateDialogFragment.IPositiveClickListener() {
+        dlg.setPositiveClickListener(new UpdateDialogFragment.OnPositiveClickListener() {
             @Override
-            public void positiveClick() {
+            public void onLoad() {
                 download();
             }
+
+            @Override
+            public void onRetry() {
+                download();
+            }
+
+            @Override
+            public void onInstall() {
+                if (apkFile != null) {
+                    FileUtil.install(mContext, apkFile);
+                }
+            }
         });
-        ft.add(newFragment, "update_dialog");
+        ft.add(dlg, "update_dialog");
         ft.commitAllowingStateLoss();
     }
 
@@ -113,10 +133,7 @@ public class UpdateApp {
      * 是否为新版本
      */
     public static boolean haveNewVersion(VersionInfo info) {
-        if (info == null) {
-            return false;
-        }
-        return info.isNeed_upgrade();
+        return info != null && info.isNeed_upgrade();
     }
 
     /**
@@ -177,6 +194,9 @@ public class UpdateApp {
 
             @Override
             public void onSuccess(Uri fileUri) {
+                apkFile = new File(fileUri.getPath());
+                dlg.setState(UpdateDialogFragment.STATE_INSTALL);
+
                 if (mOnSilentDownloadListener != null) {
                     mOnSilentDownloadListener.onSuccess(fileUri);
                 }
@@ -184,6 +204,7 @@ public class UpdateApp {
 
             @Override
             public void onError(String msg) {
+                dlg.setState(UpdateDialogFragment.STATE_RETRY);
                 if (mOnSilentDownloadListener != null) {
                     mOnSilentDownloadListener.onError(msg);
                 }

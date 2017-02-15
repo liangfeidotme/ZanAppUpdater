@@ -14,6 +14,15 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        new UpdateApp.Builder(MainActivity.this,
+                "有赞", "http://www.eoemarket.com/download/356118_0")
+                .title("正在下载")
+                .content("有赞微商城")
+                .cancelableDialog(false)
+                .build()
+                .showDialog();
+
         findViewById(R.id.download).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
