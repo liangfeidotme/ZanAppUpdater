@@ -30,17 +30,21 @@ uploadArchives {
         username = properties.getProperty("maven.username")
         password = properties.getProperty("maven.password")
     }
+
     repositories {
         mavenDeployer {
+
             snapshotRepository(url: 'http://maven.qima-inc.com/content/repositories/snapshots/') {
                 authentication(userName: username, password: password)
             }
+
             repository(url: 'http://maven.qima-inc.com/content/repositories/releases/') {
-                authentication(userName: '', password: '')
+                authentication(userName: username, password: password)
             }
+
             pom.packaging = 'aar'
-            pom.version = "$PROJECT_VERSION_NAME-SNAPSHOT" // SNAPSHOT 一定要大写！
-            pom.groupId = 'com.youzan.mobile' // groupId 最好写成 com.youzan.mobile
+            pom.version = "$PROJECT_VERSION_NAME"
+            pom.groupId = 'com.youzan.mobile'
             pom.artifactId = "genesis"
         }
     }
@@ -50,6 +54,7 @@ uploadArchives {
 configurations {
     javadocDeps
 }
+
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     classifier = 'sources'
