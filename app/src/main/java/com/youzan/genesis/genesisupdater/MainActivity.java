@@ -66,13 +66,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
-    // TODO 1.Wrong Url
-    // TODO 2.Network Type
-
     private void onForceUpdate() {
         new AppUpdater.Builder(this)
-                .url("https://dl.yzcdn.cn/koudaitong.apk")
+                .url("https://dl.yzcdn.com/koudaitong.apk")
                 .title("版本更新啦")
                 .content("1. 很牛逼\n2. 很厉害\n3. 吊炸天")
                 .app("有赞微商城")

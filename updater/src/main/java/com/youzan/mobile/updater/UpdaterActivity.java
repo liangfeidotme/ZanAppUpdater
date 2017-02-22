@@ -28,6 +28,7 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
 
     public static final String EXTRA_STRING_APP_NAME = "extra_download_app_name";
     public static final String EXTRA_STRING_DESCRIPTION = "extra_download_description";
+    private static final String TAG = "UpdaterActivity";
 
     // internal data
     private int status;
@@ -53,6 +54,7 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
 
     // ui
     private Button downloadBtn;
+    private Button cancelBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +75,7 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
                 intent.getStringExtra(EXTRA_STRING_CONTENT));
 
         // cancel button
-        final Button cancelBtn = (Button) findViewById(R.id.cancel);
+        cancelBtn = (Button) findViewById(R.id.cancel);
         cancelBtn.setVisibility(force ? View.GONE : View.VISIBLE);
         cancelBtn.setOnClickListener(this);
 
@@ -112,14 +114,14 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
                 default:
                     break;
             }
-        } else {
+        } else if (id == R.id.cancel) {
             finish();
         }
     }
 
     @Override
     public void onBackPressed() {
-        if (force) return;
+        if (force || status == STATUS_DOWNLOADING) return;
         super.onBackPressed();
     }
 
@@ -138,23 +140,33 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
             case STATUS_DOWNLOADING:
                 downloadBtn.setText(R.string.app_updater_downloading);
                 downloadBtn.setEnabled(false);
+                if (!force) {
+                    cancelBtn.setVisibility(View.GONE);
+                }
                 break;
             case STATUS_INSTALL:
                 downloadBtn.setText(R.string.app_updater_install);
                 downloadBtn.setEnabled(true);
+                if (!force) {
+                    cancelBtn.setVisibility(View.VISIBLE);
+                }
                 break;
             case STATUS_RETRY:
                 downloadBtn.setText(R.string.app_updater_retry);
                 downloadBtn.setEnabled(true);
+                if (!force) {
+                    cancelBtn.setVisibility(View.VISIBLE);
+                }
                 break;
         }
     }
 
     private void installApk(final Uri uri) {
-        Uri apkUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider",
+        Uri apkUri = FileProvider.getUriForFile(this, getPackageName() + ".provider",
                 new File(uri.getPath()));
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
         startActivity(intent);
     }
@@ -216,3 +228,4 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 }
+
