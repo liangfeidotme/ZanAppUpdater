@@ -1,63 +1,97 @@
 package com.youzan.genesis.genesisupdater;
 
-import android.net.Uri;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Toast;
 
-import com.youzan.genesis.UpdateApp;
+import com.youzan.mobile.updater.AppUpdater;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final int PERMISSION_REQUEST_STORAGE = 0x00;
+
+    private boolean storagePermissionGranted = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        new UpdateApp.Builder(MainActivity.this,
-                "有赞", "http://www.eoemarket.com/download/356118_0")
-                .title("正在下载")
-                .content("有赞微商城")
-                .cancelableDialog(false)
-                .build()
-                .showDialog();
+        if (!storagePermissionGranted) {
+            requestStoragePermission();
+        }
 
-        findViewById(R.id.download).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new UpdateApp.Builder(MainActivity.this,
-                        "有赞", "http://www.eoemarket.com/download/356118_0")
-                        .title("title")
-                        .content("content")
-                        .cancelableDialog(true)
-                        .build()
-                        .showDialog();
-            }
-        });
-        findViewById(R.id.download_silent).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new UpdateApp.Builder(MainActivity.this,
-                        "有赞", "http://www.eoemarket.com/download/356118_0")
-                        .silent(true)
-                        .addSilentListener(new UpdateApp.OnSilentDownloadListener() {
-                            @Override
-                            public void onSuccess(Uri fileUri) {
-                                Toast.makeText(MainActivity.this, "Success: " + fileUri.toString(),
-                                        Toast.LENGTH_LONG).show();
-                            }
-
-                            @Override
-                            public void onError(String msg) {
-                                Toast.makeText(MainActivity.this, "Failed: " + msg,
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .build()
-                        .download();
-            }
-        });
+        findViewById(R.id.force_update).setOnClickListener(this);
+        findViewById(R.id.normal_update).setOnClickListener(this);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST_STORAGE:
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    storagePermissionGranted = true;
+                } else {
+                    requestStoragePermission();
+                }
+                break;
+        }
+    }
+
+    private void requestStoragePermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    PERMISSION_REQUEST_STORAGE);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        final int id = view.getId();
+        switch (id) {
+            case R.id.normal_update:
+                onNormalUpdate();
+                break;
+            case R.id.force_update:
+                onForceUpdate();
+                break;
+        }
+    }
+
+
+    // TODO 1.Wrong Url
+    // TODO 2.Network Type
+
+    private void onForceUpdate() {
+        new AppUpdater.Builder(this)
+                .url("https://dl.yzcdn.cn/koudaitong.apk")
+                .title("版本更新啦")
+                .content("1. 很牛逼\n2. 很厉害\n3. 吊炸天")
+                .app("有赞微商城")
+                .description("做生意 用有赞")
+                .force()
+                .build()
+                .update();
+    }
+
+    private void onNormalUpdate() {
+
+        new AppUpdater.Builder(this)
+                .url("https://dl.yzcdn.cn/koudaitong.apk")
+                .title("版本更新啦")
+                .content("1. 很牛逼\n2. 很厉害\n3. 吊炸天")
+                .app("有赞微商城")
+                .description("做生意 用有赞")
+//                .force()
+                .build()
+                .update();
+    }
 }
