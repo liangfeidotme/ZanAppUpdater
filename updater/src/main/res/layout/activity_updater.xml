@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="16dp">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"/>
+        android:layout_marginTop="10dp" />
 
     <android.support.v7.widget.AppCompatButton
         android:id="@+id/ok"
@@ -18,15 +18,26 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_below="@id/content"
-        android:text="@string/app_updater_download_now"/>
+        android:text="@string/app_updater_download_now" />
 
     <android.support.v7.widget.AppCompatButton
         android:id="@+id/cancel"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ok"
+        android:layout_alignBottom="@+id/ok"
+        android:layout_toLeftOf="@+id/ok"
+        android:layout_toStartOf="@+id/ok"
+        android:text="@string/app_updater_download_later" />
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/market"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_below="@id/content"
-        android:layout_toLeftOf="@id/ok"
-        android:layout_toStartOf="@id/ok"
-        android:text="@string/app_updater_download_later"/>
+        android:layout_toLeftOf="@id/cancel"
+        android:layout_toStartOf="@id/cancel"
+        android:text="@string/app_updater_app_market" />
 </RelativeLayout>

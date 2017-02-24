@@ -1,7 +1,9 @@
 <resources>
     <string name="app_updater_download_later">暂不更新</string>
     <string name="app_updater_download_now">下载安装</string>
+    <string name="app_updater_app_market">应用市场</string>
     <string name="app_updater_downloading">正在下载…</string>
+    <string name="app_updater_download_failed">下载失败：%d</string>
     <string name="app_updater_dir_not_found">找不到下载目录 - %s</string>
     <string name="app_updater_install">安装</string>
     <string name="app_updater_retry">重试下载</string>

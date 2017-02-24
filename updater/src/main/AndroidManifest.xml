@@ -8,7 +8,8 @@
 
     <application>
         <activity
-            android:name=".UpdaterActivity"
+            android:name=".DownloadActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Dialog">
         </activity>
 
@@ -22,6 +23,14 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
 
+        <receiver
+            android:name=".DownloadReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

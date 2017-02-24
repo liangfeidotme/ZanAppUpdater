@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -20,7 +21,12 @@ import android.widget.Toast;
 
 import java.io.File;
 
-public class UpdaterActivity extends AppCompatActivity implements View.OnClickListener {
+public class DownloadActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final String TAG = "UpdaterActivity";
+
+    private static final String STATE_DOWNLOAD_ID = "state_download_id";
+    private static final String STATE_DOWNLOAD_STATUS = "state_download_status";
+
     public static final String EXTRA_STRING_URL = "extra_url";
     public static final String EXTRA_STRING_TITLE = "extra_title";
     public static final String EXTRA_STRING_CONTENT = "extra_message";
@@ -28,10 +34,10 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
 
     public static final String EXTRA_STRING_APP_NAME = "extra_download_app_name";
     public static final String EXTRA_STRING_DESCRIPTION = "extra_download_description";
-    private static final String TAG = "UpdaterActivity";
 
     // internal data
     private int status;
+    private long downloadId;
 
     // data from outside
     private String appName;
@@ -82,6 +88,25 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
         // ok button
         downloadBtn = (Button) findViewById(R.id.ok);
         downloadBtn.setOnClickListener(this);
+
+        // market button
+        findViewById(R.id.market).setOnClickListener(this);
+
+        downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putLong(STATE_DOWNLOAD_ID, downloadId);
+        outState.putInt(STATE_DOWNLOAD_STATUS, status);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        downloadId = savedInstanceState.getLong(STATE_DOWNLOAD_ID);
+        status = savedInstanceState.getInt(STATE_DOWNLOAD_ID);
     }
 
     @Override
@@ -90,6 +115,15 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
         IntentFilter filter = new IntentFilter();
         filter.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         registerReceiver(downloadReceiver, filter);
+
+        if (downloadId != 0) {
+            apkUri = queryDownloadedFileUri(downloadId);
+            if (apkUri != null) {
+                status = STATUS_INSTALL;
+            }
+        }
+
+        setStatus(status);
     }
 
     @Override
@@ -116,6 +150,10 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
             }
         } else if (id == R.id.cancel) {
             finish();
+        } else if (id == R.id.market) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("market://details?id=" + getPackageName()));
+            startActivity(intent);
         }
     }
 
@@ -162,11 +200,15 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     private void installApk(final Uri uri) {
-        Uri apkUri = FileProvider.getUriForFile(this, getPackageName() + ".provider",
-                new File(uri.getPath()));
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        Uri apkUri = uri;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            apkUri = FileProvider.getUriForFile(this, getPackageName() + ".provider",
+                    new File(uri.getPath()));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        }
         intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
         startActivity(intent);
     }
@@ -182,14 +224,11 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
             return;
         }
 
-        downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-
         /** construct request */
-        String url = downloadUrl;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            url = url.replace("https", "http");
-        }
-        final DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+        final DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl));
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE
+                | DownloadManager.Request.NETWORK_WIFI);
+        request.setAllowedOverRoaming(false);
 
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
                 appName + ".apk");
@@ -202,15 +241,17 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
         if (!TextUtils.isEmpty(description)) {
             request.setDescription(description);
         } else {
-            request.setDescription(url);
+            request.setDescription(downloadUrl);
         }
 
         /** start downloading */
-        downloadManager.enqueue(request);
+        downloadId = downloadManager.enqueue(request);
         setStatus(STATUS_DOWNLOADING);
     }
 
     private void onDownloadCompleted(final long downloadId) {
+        this.downloadId = downloadId;
+
         DownloadManager.Query query = new DownloadManager.Query();
         query.setFilterById(downloadId);
         final Cursor c = downloadManager.query(query);
@@ -219,13 +260,27 @@ public class UpdaterActivity extends AppCompatActivity implements View.OnClickLi
             if (status == DownloadManager.STATUS_SUCCESSFUL) {
                 setStatus(STATUS_INSTALL);
                 apkUri = Uri.parse(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
-                installApk(apkUri);
             } else if (status == DownloadManager.STATUS_FAILED) {
                 setStatus(STATUS_RETRY);
             } else {
                 setStatus(STATUS_DOWNLOADING);
             }
         }
+    }
+
+    @Nullable
+    private Uri queryDownloadedFileUri(final long downloadId) {
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(downloadId);
+        final Cursor c = downloadManager.query(query);
+        if (c.moveToFirst()) {
+            final int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+            if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                setStatus(STATUS_INSTALL);
+                return Uri.parse(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+            }
+        }
+        return null;
     }
 }
 

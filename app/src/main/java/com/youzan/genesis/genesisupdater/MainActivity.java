@@ -68,7 +68,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void onForceUpdate() {
         new AppUpdater.Builder(this)
-                .url("https://dl.yzcdn.com/koudaitong.apk")
+                .url("https://dl.yzcdn.cn/koudaitong.apk")
+                //.url("http://photocdn.sohu.com/20170223/Img481553167.jpeg")
                 .title("版本更新啦")
                 .content("1. 很牛逼\n2. 很厉害\n3. 吊炸天")
                 .app("有赞微商城")
@@ -79,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void onNormalUpdate() {
-
         new AppUpdater.Builder(this)
                 .url("https://dl.yzcdn.cn/koudaitong.apk")
                 .title("版本更新啦")

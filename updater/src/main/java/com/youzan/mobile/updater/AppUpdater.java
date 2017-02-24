@@ -61,13 +61,13 @@ public class AppUpdater {
     }
 
     public void update() {
-        Intent intent = new Intent(builder.context, UpdaterActivity.class);
-        intent.putExtra(UpdaterActivity.EXTRA_STRING_APP_NAME,  builder.app);
-        intent.putExtra(UpdaterActivity.EXTRA_STRING_URL, builder.url);
-        intent.putExtra(UpdaterActivity.EXTRA_STRING_TITLE, builder.title);
-        intent.putExtra(UpdaterActivity.EXTRA_STRING_CONTENT, builder.content);
-        intent.putExtra(UpdaterActivity.EXTRA_STRING_DESCRIPTION,  builder.description);
-        intent.putExtra(UpdaterActivity.EXTRA_BOOLEAN_FORCE, builder.force);
+        Intent intent = new Intent(builder.context, DownloadActivity.class);
+        intent.putExtra(DownloadActivity.EXTRA_STRING_APP_NAME,  builder.app);
+        intent.putExtra(DownloadActivity.EXTRA_STRING_URL, builder.url);
+        intent.putExtra(DownloadActivity.EXTRA_STRING_TITLE, builder.title);
+        intent.putExtra(DownloadActivity.EXTRA_STRING_CONTENT, builder.content);
+        intent.putExtra(DownloadActivity.EXTRA_STRING_DESCRIPTION,  builder.description);
+        intent.putExtra(DownloadActivity.EXTRA_BOOLEAN_FORCE, builder.force);
         builder.context.startActivity(intent);
     }
 }
