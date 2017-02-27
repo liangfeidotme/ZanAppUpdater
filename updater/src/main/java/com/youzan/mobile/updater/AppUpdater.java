@@ -46,8 +46,8 @@ public class AppUpdater {
             return this;
         }
 
-        public Builder force() {
-            this.force = true;
+        public Builder force(final boolean force) {
+            this.force = force;
             return this;
         }
 

@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .content("1. 很牛逼\n2. 很厉害\n3. 吊炸天")
                 .app("有赞微商城")
                 .description("做生意 用有赞")
-                .force()
+                .force(true)
                 .build()
                 .update();
     }
