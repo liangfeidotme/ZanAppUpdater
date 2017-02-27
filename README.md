@@ -44,6 +44,13 @@ new AppUpdater.Builder(this)
     .update();
 ```
 
+### 优势
+
+* 通过 DownloadManager 下载，减少 App 负担
+* 通过 Receiver 接收下载完成的广播，即使 App 被杀死依然会弹出安装界面
+* 提供市场下载选项，以防下载失败
+* 总之，更新率会提高很多
+
 ### 作者
 
 * 梁飞
