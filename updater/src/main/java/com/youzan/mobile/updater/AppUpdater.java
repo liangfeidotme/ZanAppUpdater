@@ -9,13 +9,13 @@ public class AppUpdater {
     public static class Builder {
         private Context context;
 
-        private String url;
-        private String title;
-        private String content;
-        private boolean force;
+        private String url;     // apk 下载链接
+        private String title;   // 更新对话框 title
+        private String content; // 更新内容
+        private boolean force;  // 是否强制更新
 
-        private String app;
-        private String description;
+        private String app; // app 名字
+        private String description; // app 描述
 
         public Builder(final Context context) {
             this.context = context;
