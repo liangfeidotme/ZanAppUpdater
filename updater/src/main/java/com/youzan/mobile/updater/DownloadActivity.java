@@ -216,6 +216,14 @@ public class DownloadActivity extends AppCompatActivity implements View.OnClickL
     private void downloadApk() {
         if (TextUtils.isEmpty(downloadUrl)) return;
 
+        // Some device may not provide DownloadManager, so forward to browser.
+        if (downloadManager == null) {
+            final Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(downloadUrl));
+            startActivity(intent);
+            return;
+        }
+
         // check dir
         File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         if (!path.exists() && !path.mkdirs()) {
