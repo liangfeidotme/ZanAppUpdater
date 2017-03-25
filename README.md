@@ -4,6 +4,7 @@ ZanAppUpdater
 * 强制更新
 * 提示更新
 * 提供应用市场下载
+* 提供浏览器下载
 * 支持 Android N - FileProvider
 
 依赖
